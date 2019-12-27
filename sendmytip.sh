@@ -11,5 +11,5 @@ alias cli="$(which jcli) rest v0"
 lastBlockHeight=$(cli node stats get --output-format json | jq -r .lastBlockHeight)
 echo ${lastBlockHeight}
 if [ "$lastBlockHeight" != "" ]; then
-curl -G "https://tamoq3vkbl.execute-api.us-west-2.amazonaws.com/prod/sharemytip?poolid=${MY_POOL_ID}&userid=${MY_USER_ID}&genesispref=${THIS_GENESIS}&mytip=${lastBlockHeight}"
+curl -G "https://api.pooltool.io/v0/sharemytip?poolid=${MY_POOL_ID}&userid=${MY_USER_ID}&genesispref=${THIS_GENESIS}&mytip=${lastBlockHeight}"
 fi
