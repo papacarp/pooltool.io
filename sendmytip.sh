@@ -12,7 +12,7 @@ nodestats=$(cli node stats get --output-format json > stats.json);
 lastBlockHeight=$(cat stats.json | jq -r .lastBlockHeight)
 lastBlockHash=$(cat stats.json | jq -r .lastBlockHash)
 lastPoolID=$(cli block ${lastBlockHash} get | cut -c169-232)
-echo $lastblock
+
 echo   "https://api.pooltool.io/v0/sharemytip?poolid=${MY_POOL_ID}&userid=${MY_USER_ID}&genesispref=${THIS_GENESIS}&mytip=${lastBlockHeight}&lasthash=${lastBlockHash}&lastpool=${lastPoolID}"
 if [ "$lastBlockHeight" != "" ]; then
 curl -G "https://api.pooltool.io/v0/sharemytip?poolid=${MY_POOL_ID}&userid=${MY_USER_ID}&genesispref=${THIS_GENESIS}&mytip=${lastBlockHeight}&lasthash=${lastBlockHash}&lastpool=${lastPoolID}"
