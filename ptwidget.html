@@ -1,0 +1,75 @@
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js"></script>
+</head>
+<body>
+<table class="ptwidget">
+    <tr><th colspan=2>My Pool ITN Live Stats</th></tr>
+    <tr><td class="ptwidgetright">Epoch:</td><td class="ptwidgetleft" id="ptepoch"></td></tr>
+    <tr><td class="ptwidgetright">Slot:</td><td class="ptwidgetleft" id="ptslot"></td></tr>
+    <tr><td class="ptwidgetright">Height:</td><td class="ptwidgetleft" id="ptheight"></td></tr>
+    <tr><td class="ptwidgetright">Live Stake:</td><td class="ptwidgetleft" id="ptstake"></td></tr>
+    <tr><td class="ptwidgetright">Epoch Blocks:</td><td class="ptwidgetleft" id="pteblocks"></td></tr>
+
+    <tr><td colspan=2 class="ptwidgetcenter"><a class="ptwidget" href="https://pooltool.io"  target="_blank"><img class="ptwidget" src="https://pooltool.io/pooltoollogosm.png"> PoolTool.io</a>
+        <br/><span class="ptwidget">data updates every 60 seconds</span>
+    </td></tr>
+</table>
+
+</body>
+<script>
+    var mypoolid = "52b33a5db6d27d3b791c65d21a646f2b127aa0c0a09737f692c53750a5dab0ce"
+    let LoadData = function() {
+        const start = Date.now()
+        $.getJSON( "https://pooltool.s3-us-west-2.amazonaws.com/8e4d2a3/pools/"+mypoolid+"/livestats.json?now="+String(start), function( data ) {
+            var formattedstake = numeral(data['livestake']/1000000).format('0.00 a');
+
+            $("#ptstake").html(formattedstake)
+            $("#pteblocks").html(data['epochblocks'])
+        })
+
+        $.getJSON( "https://pooltool.s3-us-west-2.amazonaws.com/stats/stats.json?"+String(start), function( data ) {
+            var formattedheight = numeral(data['majoritymax']).format('0,');
+            $("#ptepoch").html(data['currentepoch'])
+            $("#ptslot").html(data['currentslot'])
+            $("#ptheight").html(formattedheight)
+        })
+    }
+
+    $(document).ready(function() {
+        LoadData()
+        setInterval(LoadData, 60000); // this will update every 30 seconds
+    })
+</script>
+<style>
+    span.ptwidget {
+        font-size:xx-small;
+    }
+    img.ptwidget {
+        vertical-align:middle;
+        height: 20px;
+        width: 20px;
+    }
+    a.ptwidget {
+        color: #ffffff;
+    }
+    td.ptwidgetcenter {
+        text-align: center;
+    }
+    td.ptwidgetright {
+        text-align: right;
+    }
+    td.ptwidgetleft {
+        text-align: left;
+    }
+    table.ptwidget {
+        color: #ffffff;
+        background-color: rgb(63, 81, 181) !important;
+        border-radius: 15px;
+        padding: 5px;
+        font-family: sans-serif;
+        font-size:small;
+    }
+</style>
+</html>
