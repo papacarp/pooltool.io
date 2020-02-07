@@ -29,7 +29,7 @@
             $("#pteblocks").html(data['epochblocks'])
         })
 
-        $.getJSON( "https://pooltool.s3-us-west-2.amazonaws.com/stats/stats.json?"+String(start), function( data ) {
+        $.getJSON( "https://pooltool.s3-us-west-2.amazonaws.com/stats/stats.json?now="+String(start), function( data ) {
             var formattedheight = numeral(data['majoritymax']).format('0,');
             $("#ptepoch").html(data['currentepoch'])
             $("#ptslot").html(data['currentslot'])
