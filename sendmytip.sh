@@ -9,9 +9,10 @@ MY_USER_ID="xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx"
 THIS_GENESIS="8e4d2a343f3dcf93"
 # THE NAME OF THE SCRIPT YOU USE TO MANAGE YOUR POOL
 PLATFORM="sendmytip.sh"
-## node count should start from 1
+## node count should start from 1 (e.g: if you have a single node use 1, if you have 3 nodes; use 3...)
 ITN1_NODES_COUNT="1"
-## your rest private port (start from x1x1 to match node count)
+## your rest private port (start from xxx1 to match node count)
+## if you have a single node, this would be the REST api port for it
 ITN1_REST_API_PORT="3101"
 
 # THIS SHOULD TAKE CARE OF JCLI PATH (ASSUMES /usr/local/bin or same directory)
@@ -40,8 +41,8 @@ NODE_HEIGHT=${lastBlockHeightArray[1]}
 NODE_INDEX=1
 
 ## ...by iterating over the array we set above
-for ((n = 1; n < ${#lastBlockHeightArray[@]}; ++n)); do
-    ## let's avoid 'null' values from botstrapping nodes
+for ((n = 1; n <= ${#lastBlockHeightArray[@]}; ++n)); do
+    ## let's avoid 'null' values from botstrapping/not available nodes
     if [[ "${lastBlockHeightArray[n]}" =~ ^[0-9] ]]; then
         ## index with the highest lastBlockHeight wins...
         ## ...and it's set as index value to use in the actual REST query later
