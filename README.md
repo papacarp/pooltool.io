@@ -21,7 +21,7 @@ You have two options:
 2.  You can send your slot count plus validation for the previous epoch.  If you validate your block count submissions we can then display ACTUAL performance metrics for your pool.  Your data will also be used to develop high level statistics on assignments vs. stake.
 
 There are two methods offered at this time for validation:
-1.  You can send your slots encrypted at the start of the epoch along with your slot count.  Then at the start of the next epoch you will send a key to allow us to unencrypt the slots and verify your loaded count matches the actual.
-2.  You can send a hash of your leader logs at the start of the epoch along with your slot count. Then at the start of the next epoch you will send us the actual leader logs and confirm the hash matchees what you sent previously.
+1.  You can send your slots encrypted at the start of the epoch along with your slot count.  Then at the start of the next epoch you will send a key to allow us to unencrypt the slots and verify your loaded count matches the actual. (we are testing the final version of this today)
+2.  You can send a hash of your leader logs at the start of the epoch along with your slot count. Then at the start of the next epoch you will send us the actual leader logs and confirm the hash matchees what you sent previously. (In development - we have not finished implementing this yet)
 
 If the hash or encryption do not match pooltool will not allow you to upload your slots.  Eventually we will implement probation for pools that upload erroneous data.
