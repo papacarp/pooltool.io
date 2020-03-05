@@ -25,3 +25,5 @@ There are two methods offered at this time for validation:
 2.  You can send a hash of your leader logs at the start of the epoch along with your slot count. Then at the start of the next epoch you will send us the actual leader logs and confirm the hash matchees what you sent previously. (In development - we have not finished implementing this yet)
 
 If the hash or encryption do not match pooltool will not allow you to upload your slots.  Eventually we will implement probation for pools that upload erroneous data.
+
+Special thank you to Michael at [VIBE](https://pooltool.io/pool/ad67bc523e646aa4acce69c921d47092cb89461f2c6f1252fe6576c280aaa6a8/) for implementing much of this for pooltool. 
