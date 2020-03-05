@@ -14,6 +14,24 @@ RESTAPI_PORT=5001
 THIS_GENESIS="8e4d2a343f3dcf93"
 KEY_LOCATION="/tmp/keystorage"
 
+#Testing if variables are set
+if  [ -z "$MY_POOL_ID"] || [ -z "$MY_USER_ID" ] || [ -z "$THIS_GENESIS" ] || [ -z "$KEY_LOCATION" ]
+then
+	echo "One or more variables not set."
+	echo "MY_POOL_ID = $MY_POOL_ID"
+	echo "MY_USER_ID = $MY_USER_ID"
+	echo "THIS_GENESIS = $THIS_GENESIS"
+	echo "KEY_LOCATION = $KEY_LOCATION"
+	exit 1
+elif [ ! -d "$KEY_LOCATION" ]
+then
+	echo "Key directory doesn't exist. Please provide a valid location."
+	echo "KEY_LOCATION = $KEY_LOCATION"
+	exit 1
+else
+	echo "Everything ok. Starting ..."
+fi
+
 if [ ! $JORMUNGANDR_RESTAPI_URL ]; then export JORMUNGANDR_RESTAPI_URL=http://127.0.0.1:${RESTAPI_PORT}/api/v0; fi
 
 #Using CURL instead of JCLI for better portability
@@ -28,7 +46,7 @@ PREVIOUS_EPOCH=$((${CURRENT_EPOCH} - 1))
 if [ -z "$CURRENT_EPOCH" ]
 then
 	echo "Nodestats not avaliable.  Node is down or rest API misconfigured? Check REST Port and Path."
-exit 1
+	exit 1
 fi
 
 #Retrieving Leader slots assigned in current epoch
