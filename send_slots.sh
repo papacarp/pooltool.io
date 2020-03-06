@@ -6,13 +6,13 @@ VERIFY_SLOTS_GPG=true
 VERIFY_SLOTS_HASH=false
 
 #Uncomment if you want to use a remote REST API
-#JORMUNGANDR_RESTAPI_URL="<HOST>"
+#JORMUNGANDR_RESTAPI="<HOST>"
 RESTAPI_PORT=5001
 #MY_POOL_ID="<POOLID>"
 #MY_USER_ID="<USERID>" # on pooltool website get this from your account profile page
 
 THIS_GENESIS="8e4d2a343f3dcf93"
-KEY_LOCATION="/tmp/keystorage"
+KEY_LOCATION="/tmp/keystorage" # Use ${HOME} instead of ~ for specifying home directory
 
 #Testing if variables are set
 if  [ -z "$MY_POOL_ID" ] || [ -z "$MY_USER_ID" ] || [ -z "$THIS_GENESIS" ] || [ -z "$KEY_LOCATION" ]
@@ -36,12 +36,12 @@ else
 	echo "Everything ok. Starting ..."
 fi
 
-if [ ! $JORMUNGANDR_RESTAPI_URL ]; then export JORMUNGANDR_RESTAPI_URL=http://127.0.0.1:${RESTAPI_PORT}/api/v0; fi
+if [ ! $JORMUNGANDR_RESTAPI ]; then export JORMUNGANDR_RESTAPI=http://127.0.0.1:${RESTAPI_PORT}/api/v0; fi
 
 #Using CURL instead of JCLI for better portability
 
-#Getting EPOCH 
-NODESTATS=`curl -s  ${JORMUNGANDR_RESTAPI_URL}/node/stats`
+#Getting EPOCH
+NODESTATS=`curl -s  ${JORMUNGANDR_RESTAPI}/node/stats`
 CURRENT_EPOCH=`echo $NODESTATS | jq -r .lastBlockDate | cut -d. -f1`
 PREVIOUS_EPOCH=$((${CURRENT_EPOCH} - 1))
 
@@ -54,7 +54,7 @@ then
 fi
 
 #Retrieving Leader slots assigned in current epoch
-RESPONSE=`curl -s ${JORMUNGANDR_RESTAPI_URL}/leaders/logs`
+RESPONSE=`curl -s ${JORMUNGANDR_RESTAPI}/leaders/logs`
 CURRENT_SLOTS=`echo $RESPONSE | jq -c '[ .[] | select(.scheduled_at_date | startswith('\"$CURRENT_EPOCH\"')) ]'`
 ASSIGNED_SLOTS=`echo $CURRENT_SLOTS | jq '. | length'`
 
