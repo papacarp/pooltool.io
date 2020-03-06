@@ -25,9 +25,13 @@ then
 	exit 1
 elif [ ! -d "$KEY_LOCATION" ]
 then
-	echo "Key directory doesn't exist. Please provide a valid location."
-	echo "KEY_LOCATION = $KEY_LOCATION"
-	exit 1
+	echo "Key directory doesn't exist. Making the directory ..."
+	mkdir -p $KEY_LOCATION
+	if [ $? -ne 0 ]
+	then
+		echo "Unable to create Key directory. Please create manually or use a different path."
+		exit 1
+	fi
 else
 	echo "Everything ok. Starting ..."
 fi
@@ -98,11 +102,11 @@ if [ "$VERIFY_SLOTS_HASH" = true ] ; then
 
 	if [ ! -f "${KEY_LOCATION}/leader_slots_${CURRENT_EPOCH}" ]
 	then
-		echo $CURRENT_SLOTS | tee ${KEY_LOCATION}/leader_slots_${CURRENT_EPOCH}
+		echo -n $CURRENT_SLOTS | tee ${KEY_LOCATION}/leader_slots_${CURRENT_EPOCH}
 	fi
 
 	#Hash verification version goes here.  I know its verbose, but its so much easier for people to decode and customize if we keep them all separate
-	CURRENT_EPOCH_HASH=`echo $CURRENT_SLOTS | sha256sum | cut -d" " -f1 | tee ${KEY_LOCATION}/hash_${CURRENT_EPOCH}`
+	CURRENT_EPOCH_HASH=`echo -n $CURRENT_SLOTS | sha256sum | cut -d" " -f1 | tee ${KEY_LOCATION}/hash_${CURRENT_EPOCH}`
 
         JSON="$( jq -n --compact-output --arg CURRENTEPOCH "$CURRENT_EPOCH" --arg POOLID "$MY_POOL_ID" --arg USERID "$MY_USER_ID" --arg GENESISPREF "$THIS_GENESIS" --arg ASSIGNED "$ASSIGNED_SLOTS" --arg HASH "$CURRENT_EPOCH_HASH" --arg SLOTS "$LAST_EPOCH_SLOTS" '{currentepoch: $CURRENTEPOCH, poolid: $POOLID, genesispref: $GENESISPREF, userid: $USERID, assigned_slots: $ASSIGNED, this_epoch_hash: $HASH, last_epoch_slots: $SLOTS}')"
 
