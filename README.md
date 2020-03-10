@@ -34,6 +34,10 @@ There are two methods offered at this time for validation:
 
 If the hash or encryption do not match pooltool will not allow you to upload your slots.  Eventually we will implement probation for pools that upload erroneous data.
 
+If something went wrong when validating your slots for the previous epoch, and you want to get slots loaded for the current epoch quickly rather than debug the issue, you can use the smaller send_slots script to manually update your slots in pooltool.  This is meant to be used only for temporary purposes until you get slot validation working.
+
+Remember, the only way we will be able to track your performance is if you send yoru slots in a way we can validate them.
+
 #### when to send your slots
 >Setup a crontab task to send your slots at the start of every epoch.  Preferrably in the first 10 minutes of the epoch.  While we will not restrict when you can send slots at the moment, eventually we will to insure pools don't start uploading slots only when they know they will have a good epoch.
 
