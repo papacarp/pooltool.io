@@ -10,7 +10,7 @@ Special thank you to Andrea C. of  at [INSL](https://pooltool.io/pool/93756c5079
 
 # Using ptwidget.html
 
-![ptwidget](ptwidget.png)
+![ptwidget](ptwidget/ptwidget.png)
 
 To get a widget like this on your website, and insert the html into your website page.  Make sure you update the title of the table and your pool id first as well.  Note that the height reported is the PoolTool majority max height, not your own pool's height.  
 
