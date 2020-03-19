@@ -29,16 +29,16 @@
             currentepoch = data['currentepoch']
             $("#ptslot").html(data['currentslot'])
             $("#ptheight").html(formattedheight)
-        })
-        
-        $.getJSON( "https://pooltool.s3-us-west-2.amazonaws.com/8e4d2a3/pools/"+mypoolid+"/livestats.json?now="+String(start), function( data ) {
-            var formattedstake = numeral(data['livestake']/1000000).format('0.00 a');
-	    
-            $("#ptstake").html(formattedstake)
-            if(typeof(data['lastBlockEpoch'])=="undefined" || parseInt(currentepoch) != parseInt(data['lastBlockEpoch'])) {
-            	data['epochblocks']=0
-            }
-            $("#pteblocks").html(data['epochblocks'])
+
+            $.getJSON( "https://pooltool.s3-us-west-2.amazonaws.com/8e4d2a3/pools/"+mypoolid+"/livestats.json?now="+String(start), function( data ) {
+                var formattedstake = numeral(data['livestake']/1000000).format('0.00 a');
+
+                $("#ptstake").html(formattedstake)
+                if(typeof(data['lastBlockEpoch'])=="undefined" || parseInt(currentepoch) != parseInt(data['lastBlockEpoch'])) {
+                    data['epochblocks']=0
+                }
+                $("#pteblocks").html(data['epochblocks'])
+            })
         })
     }
 
