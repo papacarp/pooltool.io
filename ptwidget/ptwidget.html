@@ -34,10 +34,18 @@
                 var formattedstake = numeral(data['livestake']/1000000).format('0.00 a');
 
                 $("#ptstake").html(formattedstake)
-                if(typeof(data['lastBlockEpoch'])=="undefined" || parseInt(currentepoch) != parseInt(data['lastBlockEpoch'])) {
-                    data['epochblocks']=0
+                if (
+                  typeof(data['lastBlockEpoch'])=="undefined" ||
+                  parseInt(currentepoch) != parseInt(data['lastBlockEpoch']) &&
+                  ! parseInt(currentepoch) == (parseInt(data['lastBlockEpoch']) + 1)
+                ) {
+                    data['epochblocks']="?"
+                    data['lifetimeblocks']="?"
+                } else if (parseInt(currentepoch) == (parseInt(data['lastBlockEpoch']) + 1)) {
+                    data['epochblocks']="0"
                 }
                 $("#pteblocks").html(data['epochblocks'])
+                $("#ptlblocks").html(data['lifetimeblocks'])
             })
         })
     }
