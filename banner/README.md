@@ -1,7 +1,7 @@
 ### banner feature ###
 # stats to provice for stake pool operators to use on their websites (HTML)
 # information to include
-Pool Address
+Pool Address \n
 Ticker
 Live Stake
 Fee %
