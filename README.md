@@ -16,7 +16,7 @@ To get a widget like this on your website, and insert the html into your website
 
 Note the includes of Jquery and numeral.
 
-If anyone would like to beautify the simple formatting or optimize this as a widget please let me know.  lifetime blocks will get added next time I'm updating the back end.
+If anyone would like to beautify the simple formatting or optimize this as a widget please let me know.
 
 # Using send_slots.sh
 
