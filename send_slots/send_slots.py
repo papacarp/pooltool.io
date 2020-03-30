@@ -117,7 +117,7 @@ class Slots():
             if dot_pos > -1 and slot['scheduled_at_date'][0:dot_pos] == str(self._current_epoch):
                 current_slots.append(slot)
         return current_slots
-        
+
     def _generate_new_key(self):
         try:
             cmd = ["openssl", "rand", "-base64", "32"]
@@ -181,7 +181,7 @@ class Slots():
             'poolid': self._p['pool_id'],
             'genesispref': self._p['genesis'],
             'userid': self._p['user_id'],
-            'assigned_slots': str(len(self._leaders_logs)),
+            'assigned_slots': str(len(self._current_slots)),
             'previous_epoch_key': previous_epoch_key,
             'encrypted_slots': current_slots_encrypted
         }
@@ -211,7 +211,7 @@ class Slots():
             'poolid': self._p['pool_id'],
             'genesispref': self._p['genesis'],
             'userid': self._p['user_id'],
-            'assigned_slots': str(len(self._leaders_logs)),
+            'assigned_slots': str(len(self._current_slots)),
             'this_epoch_hash': current_epoch_hash,
             'last_epoch_slots': last_epoch_slots
         }
@@ -224,7 +224,7 @@ class Slots():
             'poolid': self._p['pool_id'],
             'genesispref': self._p['genesis'],
             'userid': self._p['user_id'],
-            'assigned_slots': str(len(self._leaders_logs)),
+            'assigned_slots': str(len(self._current_slots)),
         }
 
         self._send_data(data)
@@ -253,7 +253,6 @@ class Slots():
             self._verify_slots_hash()
         else:
             self._no_verification_method()
-
 
 def show_invalid_params(invalid_params, params):
     print("Error: Invalid parameters:")
