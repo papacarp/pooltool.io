@@ -28,7 +28,6 @@ import os
 import getopt
 import requests
 import hashlib
-from pathlib import Path
 from subprocess import Popen, PIPE
 
 class Slots():
@@ -65,7 +64,7 @@ class Slots():
             print(json.dumps(data))
 
             r = requests.post(self._url_pool_tool, data=json.dumps(data), headers=self._headers)
-            
+
             print('Response received:')
             print(r.content.decode())
             sys.exit(0)
@@ -113,10 +112,11 @@ class Slots():
     def _get_current_slots(self):
         current_slots = []
         for slot in self._leaders_logs:
-            if slot['scheduled_at_date'] == self._current_epoch:
+            dot_pos = slot['scheduled_at_date'].find('.')
+            if dot_pos > -1 and slot['scheduled_at_date'][0:dot_pos] == str(self._current_epoch):
                 current_slots.append(slot)
         return current_slots
-        
+
     def _generate_new_key(self):
         try:
             cmd = ["openssl", "rand", "-base64", "32"]
@@ -126,7 +126,7 @@ class Slots():
                 print('Error: Failed to generate new key.')
                 print('stdout: {}\nstderr:{}'.format(stdout.decode(), stderr.decode()))
                 sys.exit(1)
-            
+
             return stdout.decode()
         except Exception as e:
             print('Error: Failed to generate new key')
@@ -157,7 +157,7 @@ class Slots():
 
         return stdout.decode()
 
-    def _verify_slots_gpg(self):   
+    def _verify_slots_gpg(self):
         previous_epoch_passphrase_filename = '{key_path}{s}passphrase_{epoch}'.format(key_path=self._p['key_path'], s=os.sep, epoch=self._previous_epoch)
         previous_epoch_key = None
         if os.path.exists(previous_epoch_passphrase_filename):
@@ -180,7 +180,7 @@ class Slots():
             'poolid': self._p['pool_id'],
             'genesispref': self._p['genesis'],
             'userid': self._p['user_id'],
-            'assigned_slots': str(len(self._leaders_logs)),
+            'assigned_slots': str(len(self._current_slots)),
             'previous_epoch_key': previous_epoch_key,
             'encrypted_slots': current_slots_encrypted
         }
@@ -196,25 +196,25 @@ class Slots():
         else:
             last_epoch_slots = ''
 
-        leader_slots_current_epoch_filename = '{key_path}{s}leader_slots_{epoch}'.format(key_path=self._p['key_path'], s=os.sep, epoch=self.current_epoch)
+        leader_slots_current_epoch_filename = '{key_path}{s}leader_slots_{epoch}'.format(key_path=self._p['key_path'], s=os.sep, epoch=self._current_epoch)
         if not os.path.exists(leader_slots_current_epoch_filename):
-            self._write_data(leader_slots_prev_epoch_filename, json.dumps(data))
+            self._write_data(leader_slots_current_epoch_filename, json.dumps(self._current_slots))
 
         # hash verification version
-        hash_current_epoch_filename = '{key_path}{s}hash_{epoch}'.format(key_path=self._p['key_path'], s=os.sep, epoch=self.current_epoch)
+        hash_current_epoch_filename = '{key_path}{s}hash_{epoch}'.format(key_path=self._p['key_path'], s=os.sep, epoch=self._current_epoch)
         current_epoch_hash = hashlib.sha256(json.dumps(self._current_slots).encode('utf-8')).hexdigest()
         self._write_data(hash_current_epoch_filename, current_epoch_hash)
-        
+
         data = {
             'currentepoch': str(self._current_epoch),
             'poolid': self._p['pool_id'],
             'genesispref': self._p['genesis'],
             'userid': self._p['user_id'],
-            'assigned_slots': str(en(self._leaders_logs)),
+            'assigned_slots': str(len(self._current_slots)),
             'this_epoch_hash': current_epoch_hash,
-            'last_epoch_slots': last_epoch_slots
+            'last_epoch_slots': '[]' if type(last_epoch_slots) is list and len(last_epoch_slots) == 0 else last_epoch_slots
         }
-        
+
         self._send_data(data)
 
     def _no_verification_method(self):
@@ -223,7 +223,7 @@ class Slots():
             'poolid': self._p['pool_id'],
             'genesispref': self._p['genesis'],
             'userid': self._p['user_id'],
-            'assigned_slots': str(len(self._leaders_logs)),
+            'assigned_slots': str(len(self._current_slots)),
         }
 
         self._send_data(data)
@@ -253,7 +253,6 @@ class Slots():
         else:
             self._no_verification_method()
 
-
 def show_invalid_params(invalid_params, params):
     print("Error: Invalid parameters:")
     for param in invalid_params:
@@ -262,7 +261,7 @@ def show_invalid_params(invalid_params, params):
     print()
 
 def show_help(program_name, params):
-    print("{} [OPTION]....".format(program_name))
+    print("{} [ -g [0|1] | -s [0|1] ] [OPTION]....".format(program_name))
     print()
     print("One or more variables not set:")
     print()
@@ -271,8 +270,8 @@ def show_help(program_name, params):
     print("-u, {:<30} {}".format("--user-id=USER_ID", "PoolTool user id"))
     print()
     print("Optional parameters with defaults fallback values:")
-    print("-g, {:<30} {}".format("--verify-gpg=BOOL", "Determines what you upload to pooltool, default: 1, BOOL:[0,1]"))
-    print("-s, {:<30} {}".format("--verify-hash=BOOL", "Determines what you upload to pooltool, default: 1, BOOL:[0,1]"))
+    print("-g, {:<30} {}".format("--verify-gpg=BOOL", "Determines what you upload to pooltool, default: 0, BOOL:[0,1]"))
+    print("-s, {:<30} {}".format("--verify-hash=BOOL", "Determines what you upload to pooltool, default: 0, BOOL:[0,1]"))
     url = params['jormungandr_restapi'].format(rest_api_port=params['restapi_port'])
     print("-r, {:<30} {}".format("--jormungandr_restapi=URL", "Jormungandr rest api url, default: {url}".format(url=url)))
     print("-p, {:<30} {}".format("--restapi-port=PORT", "Port number for jormungandr rest api, default: 5001"))
@@ -280,6 +279,8 @@ def show_help(program_name, params):
     print("-u, {:<30} {}".format("--user-id=USER_ID", "PoolTool user id"))
     print("-t, {:<30} {}".format("--genesis=THIS_GENESIS", "Genesis hash, default: 8e4d2a343f3dcf93"))
     print("-k, {:<30} {}".format("--key-path=KEY_PATH", "Location where the temporary files generated by this tool will be stored, default: /tmp/keystorage"))
+
+    print("If neither -g nor -s are specified the number of slots will be sent to pooltool but pooltool won't be able to verify the number of blocks processed by the pool.")
 
 def create_path(key_path):
     if not os.path.exists(key_path):
@@ -294,7 +295,7 @@ def create_path(key_path):
 def parse_cmd_parameters(argv):
     # default parameters values
     parsed_params = {
-        'verify_slots_gpg': True,
+        'verify_slots_gpg': False,
         'verify_slots_hash': False,
         'jormungandr_restapi': 'http://127.0.0.1:{rest_api_port}/api/v0',
         'restapi_port': 5001,
@@ -306,7 +307,7 @@ def parse_cmd_parameters(argv):
 
     # get program name
     program_name = argv[0]
-    
+
     # if program is called without parameters show help and quit
     if len(argv) <= 1:
         show_help(program_name, parsed_params)
@@ -331,7 +332,6 @@ def parse_cmd_parameters(argv):
             else:
                 parsed_params['verify_slots_gpg'] = True
         elif opt in ("-s", "--verify-hash"):
-            print("argaa", arg)
             if not arg is None and len(arg) > 0:
                 parsed_params['verify_slots_hash'] = False if int(arg) == 0 else True
             else:
@@ -358,11 +358,15 @@ def parse_cmd_parameters(argv):
         elif opt in ("-k", "--key-path"):
             if not arg is None and len(arg) > 0:
                 parsed_params['key_path'] = arg
-        
+
     if len(invalid_params) > 0:
         show_invalid_params(invalid_params, parsed_params)
         show_help(program_name, parsed_params)
-    
+
+    if parsed_params['verify_slots_gpg'] and parsed_params['verify_slots_hash']:
+        print("Error: You can choose upload method to verify slots with gpg or hash but not both.")
+        sys.exit(1)
+
     if parsed_params['jormungandr_restapi'].find('rest_api_port') > -1:
         parsed_params['jormungandr_restapi'] = parsed_params['jormungandr_restapi'].format(rest_api_port=parsed_params['restapi_port'])
 
@@ -374,7 +378,7 @@ if __name__ == "__main__":
 
     # make sure the path exists. If it doesn't it will be created
     create_path(parsed_params['key_path'])
-        
+
     print("Everything ok. Starting ...")
     slots = Slots(parsed_params)
     slots.process()
