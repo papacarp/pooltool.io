@@ -1,132 +1,107 @@
 #!/bin/bash
 
-shopt -s expand_aliases
-#Change below variables to determine what you upload to pooltool
-VERIFY_SLOTS_GPG=true
-VERIFY_SLOTS_HASH=false
-
-#Uncomment if you want to use a remote REST API
-#JORMUNGANDR_RESTAPI="<HOST>"
-RESTAPI_PORT=5001
-#MY_POOL_ID="<POOLID>"
-#MY_USER_ID="<USERID>" # on pooltool website get this from your account profile page
-
+## CHANGE THESE TO SUIT YOUR POOL TO YOUR POOL ID AS ON THE EXPLORER
+MY_POOL_ID="XXXXXXXX"
+## GET THIS FROM YOUR ACCOUNT PROFILE PAGE ON POOLTOOL WEBSITE
+MY_USER_ID="XXXXXXXX"
+## WE ONLY ACTUALLY LOOK AT THE FIRST 7 CHARACTERS
 THIS_GENESIS="8e4d2a343f3dcf93"
-KEY_LOCATION="/tmp/keystorage" # Use ${HOME} instead of ~ for specifying home directory
 
-#Testing if variables are set
-if  [ -z "$MY_POOL_ID" ] || [ -z "$MY_USER_ID" ] || [ -z "$THIS_GENESIS" ] || [ -z "$KEY_LOCATION" ]
-then
-	echo "One or more variables not set."
-	echo "MY_POOL_ID = $MY_POOL_ID"
-	echo "MY_USER_ID = $MY_USER_ID"
-	echo "THIS_GENESIS = $THIS_GENESIS"
-	echo "KEY_LOCATION = $KEY_LOCATION"
-	exit 1
-elif [ ! -d "$KEY_LOCATION" ]
-then
-	echo "Key directory doesn't exist. Making the directory ..."
-	if ! mkdir -p "$KEY_LOCATION"
-	then
-		echo "Unable to create Key directory. Please create manually or use a different path."
-		exit 1
-	fi
-else
-	echo "Everything ok. Starting ..."
+## CHANGE BELOW VARIABLES TO DETERMINE WHAT YOU UPLOAD TO POOLTOOL (EITHER GPG OR HASH)
+VERIFY_SLOTS_GPG="true"
+VERIFY_SLOTS_HASH="false"
+
+## YOUR REST HOST - Uncomment if you want to use a REMOTE REST API
+## JORMUNGANDR_RESTAPI="<HOST>"
+## YOUR REST PRIVATE PORT
+RESTAPI_PORT=3001
+
+## KEY LOCATION STORES THE EPOCHS DATA - DON'T REMOVE THIS DIRECTORY NOR SET IT TO /tmp
+## IF YOU DO, SEND_SLOT WILL FAIL VALIDATION OF MINTED BLOCKS
+KEY_LOCATION="${HOME}/keystorage"
+
+## TESTING IF VARIABLES ARE SET
+if [ -z "$MY_POOL_ID" ] || [ -z "$MY_USER_ID" ] || [ -z "$THIS_GENESIS" ] || [ -z "$KEY_LOCATION" ]; then
+    echo "One or more variables not set."
+    echo "MY_POOL_ID = $MY_POOL_ID"
+    echo "MY_USER_ID = $MY_USER_ID"
+    echo "THIS_GENESIS = $THIS_GENESIS"
+    echo "KEY_LOCATION = $KEY_LOCATION"
+    exit 1
 fi
 
-if [ ! "$JORMUNGANDR_RESTAPI" ]; then export JORMUNGANDR_RESTAPI=http://127.0.0.1:${RESTAPI_PORT}/api/v0; fi
+## LET'S MAKE SURE THE KEY_LOCATION DIRECTORY EXISTS
+if ! [ -d "$KEY_LOCATION" ]; then
+    if ! mkdir -p "$KEY_LOCATION"; then
+        echo "ERROR: UNABLE TO CREATE KEY DIRECTORY. PLEASE CREATE MANUALLY WITH \"sudo mkdir -p $KEY_LOCATION\""
+        exit 2
+    fi
+fi
 
-#Using CURL instead of JCLI for better portability
+## LET'S SET THE REST API URL FOR CURL
+if [ ! "$JORMUNGANDR_RESTAPI" ]; then
+    JORMUNGANDR_RESTAPI=http://127.0.0.1:${RESTAPI_PORT}/api/v0
+fi
 
-#Getting EPOCH
-NODESTATS=$(curl -s  ${JORMUNGANDR_RESTAPI}/node/stats)
-CURRENT_EPOCH=$(echo "$NODESTATS" | jq -r .lastBlockDate | cut -d. -f1)
+## CALCULATING THE NEEDED EPOCHS
+chainstartdate=1576264417
+elapsed=$((($(date +%s) - chainstartdate)))
+CURRENT_EPOCH=$(((elapsed / 86400)))
 PREVIOUS_EPOCH=$((CURRENT_EPOCH - 1))
 
-#We need to exit with an error if nodestats is empty (IE, node, down or misconfiguration)
-
-if [ -z "$CURRENT_EPOCH" ]
-then
-	echo "Nodestats not avaliable.  Node is down or rest API misconfigured? Check REST Port and Path."
-	exit 1
-fi
-
-#Retrieving Leader slots assigned in current epoch
-RESPONSE=$(curl -s ${JORMUNGANDR_RESTAPI}/leaders/logs)
-CURRENT_SLOTS=$(echo "$RESPONSE" | jq -c '[ .[] | select(.scheduled_at_date | startswith('\"$CURRENT_EPOCH\"')) ]')
+## RETRIEVING LEADER SLOTS ASSIGNED IN CURRENT EPOCH
+CURRENT_SLOTS=$(curl -s ${JORMUNGANDR_RESTAPI}/leaders/logs | jq -c '[ .[] | select(.scheduled_at_date | startswith('\"$CURRENT_EPOCH\"')) ]')
 ASSIGNED_SLOTS=$(echo "$CURRENT_SLOTS" | jq '. | length')
 
-if [ "$VERIFY_SLOTS_GPG" = true ] ; then
-	#Generating symmetric key for current epoch and retrieving previous epoch key
-	if [ -f "${KEY_LOCATION}/passphrase_${PREVIOUS_EPOCH}" ]
-	then
-		PREVIOUS_EPOCH_KEY=$(cat "${KEY_LOCATION}"/passphrase_"${PREVIOUS_EPOCH}")
-	else
-		PREVIOUS_EPOCH_KEY=''
-	fi
+## GPG SIGNING AND SEND TO POOL TOOL
+if [ "$VERIFY_SLOTS_GPG" == "true" ]; then
+    ## GENERATING SYMMETRIC KEY FOR CURRENT EPOCH AND RETRIEVING PREVIOUS EPOCH KEY
+    if [ -f "${KEY_LOCATION}/passphrase_${PREVIOUS_EPOCH}" ]; then
+        PREVIOUS_EPOCH_KEY=$(cat "${KEY_LOCATION}"/passphrase_${PREVIOUS_EPOCH})
+    else
+        PREVIOUS_EPOCH_KEY=""
+    fi
 
-	if [ -f "${KEY_LOCATION}/passphrase_${CURRENT_EPOCH}" ]
-	then
-		CURRENT_EPOCH_KEY=$(cat "${KEY_LOCATION}"/passphrase_"${CURRENT_EPOCH}")
-	else
-		CURRENT_EPOCH_KEY=$(openssl rand -base64 32 | tee "${KEY_LOCATION}"/passphrase_"${CURRENT_EPOCH}")
-	fi
+    if [ -f "${KEY_LOCATION}/passphrase_${CURRENT_EPOCH}" ]; then
+        CURRENT_EPOCH_KEY=$(cat "${KEY_LOCATION}"/passphrase_"${CURRENT_EPOCH}")
+    else
+        CURRENT_EPOCH_KEY=$(openssl rand -base64 32 | tee "${KEY_LOCATION}"/passphrase_"${CURRENT_EPOCH}")
+    fi
 
-	#Encrypting current slots for sending to pooltool
-	CURRENT_SLOTS_ENCRYPTED=$(echo "$CURRENT_SLOTS" | gpg --symmetric --armor --batch --passphrase "${CURRENT_EPOCH_KEY}")
+    ## ENCRYPTING CURRENT SLOTS FOR SENDING TO POOLTOOL
+    CURRENT_SLOTS_ENCRYPTED=$(echo "$CURRENT_SLOTS" | gpg --symmetric --armor --batch --passphrase "${CURRENT_EPOCH_KEY}")
 
-	#Creating JSON for sending to pooltool
-
-	JSON="$( jq -n --compact-output --arg CURRENTEPOCH "$CURRENT_EPOCH" --arg POOLID "$MY_POOL_ID" --arg USERID "$MY_USER_ID" --arg GENESISPREF "$THIS_GENESIS" --arg ASSIGNED "$ASSIGNED_SLOTS" --arg KEY "$PREVIOUS_EPOCH_KEY" --arg SLOTS "$CURRENT_SLOTS_ENCRYPTED" '{currentepoch: $CURRENTEPOCH, poolid: $POOLID, genesispref: $GENESISPREF, userid: $USERID, assigned_slots: $ASSIGNED, previous_epoch_key: $KEY, encrypted_slots: $SLOTS}')"
-
-	echo "Packet Sent:"
-	echo "$JSON"
-
-	RESPONSE=$(curl -s -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "$JSON" "https://api.pooltool.io/v0/sendlogs")
-
-	echo "Response Received:"
-	echo "$RESPONSE"
-	exit 1
+    ## CREATING JSON FOR SENDING TO POOLTOOL
+    JSON="$(jq -n --compact-output --arg CURRENTEPOCH "$CURRENT_EPOCH" --arg POOLID "$MY_POOL_ID" --arg USERID "$MY_USER_ID" --arg GENESISPREF "$THIS_GENESIS" --arg ASSIGNED "$ASSIGNED_SLOTS" --arg KEY "$PREVIOUS_EPOCH_KEY" --arg SLOTS "$CURRENT_SLOTS_ENCRYPTED" '{currentepoch: $CURRENTEPOCH, poolid: $POOLID, genesispref: $GENESISPREF, userid: $USERID, assigned_slots: $ASSIGNED, previous_epoch_key: $KEY, encrypted_slots: $SLOTS}')"
+    echo "Packet Sent: $JSON"
+    echo "Response Received: $(curl -s -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "$JSON" "https://api.pooltool.io/v0/sendlogs")"
+    exit 3
 fi
 
-if [ "$VERIFY_SLOTS_HASH" = true ] ; then
-	#Pushing the current slots to file and getting the slots from the last epoch.
-	if [ -f "${KEY_LOCATION}/leader_slots_${PREVIOUS_EPOCH}" ]
-	then
-                LAST_EPOCH_SLOTS=$(cat "${KEY_LOCATION}"/leader_slots_"${PREVIOUS_EPOCH}")
-        else
-                LAST_EPOCH_SLOTS=''
-        fi
+## HASHING AND SENDING TO POOL TOOL
+if [ "$VERIFY_SLOTS_HASH" == "true" ]; then
+    ## PUSHING THE CURRENT SLOTS TO FILE AND GETTING THE SLOTS FROM THE LAST EPOCH.
+    if [ -f "${KEY_LOCATION}/leader_slots_${PREVIOUS_EPOCH}" ]; then
+        LAST_EPOCH_SLOTS=$(cat "${KEY_LOCATION}"/leader_slots_${PREVIOUS_EPOCH})
+    else
+        LAST_EPOCH_SLOTS=""
+    fi
 
-	if [ ! -f "${KEY_LOCATION}/leader_slots_${CURRENT_EPOCH}" ]
-	then
-		echo -n "$CURRENT_SLOTS" | tee "${KEY_LOCATION}/leader_slots_${CURRENT_EPOCH}"
-	fi
+    if [ ! -f "${KEY_LOCATION}/leader_slots_${CURRENT_EPOCH}" ]; then
+        echo -n "$CURRENT_SLOTS" | tee "${KEY_LOCATION}"/leader_slots_"${CURRENT_EPOCH}"
+    fi
 
-	#Hash verification version goes here.  I know its verbose, but its so much easier for people to decode and customize if we keep them all separate
-	CURRENT_EPOCH_HASH=$(echo -n "$CURRENT_SLOTS" | sha256sum | cut -d" " -f1 | tee "${KEY_LOCATION}/hash_${CURRENT_EPOCH}")
-
-        JSON="$( jq -n --compact-output --arg CURRENTEPOCH "$CURRENT_EPOCH" --arg POOLID "$MY_POOL_ID" --arg USERID "$MY_USER_ID" --arg GENESISPREF "$THIS_GENESIS" --arg ASSIGNED "$ASSIGNED_SLOTS" --arg HASH "$CURRENT_EPOCH_HASH" --arg SLOTS "$LAST_EPOCH_SLOTS" '{currentepoch: $CURRENTEPOCH, poolid: $POOLID, genesispref: $GENESISPREF, userid: $USERID, assigned_slots: $ASSIGNED, this_epoch_hash: $HASH, last_epoch_slots: $SLOTS}')"
-
-        echo "Packet Sent:"
-        echo "$JSON"
-
-        RESPONSE=$(curl -s -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "$JSON" "https://api.pooltool.io/v0/sendlogs")
-
-        echo "Response Received:"
-        echo "$RESPONSE"
-        exit 1
-
+    ## HASH VERIFICATION VERSION GOES HERE. I KNOW ITS VERBOSE, BUT ITS SO MUCH EASIER FOR PEOPLE TO DECODE AND CUSTOMIZE IF WE KEEP THEM ALL SEPARATE
+    CURRENT_EPOCH_HASH=$(echo -n "$CURRENT_SLOTS" | sha256sum | cut -d" " -f1 | tee "${KEY_LOCATION}"/hash_"${CURRENT_EPOCH}")
+    JSON="$(jq -n --compact-output --arg CURRENTEPOCH "$CURRENT_EPOCH" --arg POOLID "$MY_POOL_ID" --arg USERID "$MY_USER_ID" --arg GENESISPREF "$THIS_GENESIS" --arg ASSIGNED "$ASSIGNED_SLOTS" --arg HASH "$CURRENT_EPOCH_HASH" --arg SLOTS "$LAST_EPOCH_SLOTS" '{currentepoch: $CURRENTEPOCH, poolid: $POOLID, genesispref: $GENESISPREF, userid: $USERID, assigned_slots: $ASSIGNED, this_epoch_hash: $HASH, last_epoch_slots: $SLOTS}')"
+    echo "Packet Sent: $JSON"
+    echo "Response Received: $(curl -s -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "$JSON" "https://api.pooltool.io/v0/sendlogs")"
+    exit 4
 fi
 
-# if we get to here then neither verification method is being used.  Just send current slots
-JSON="$( jq -n --compact-output --arg CURRENTEPOCH "$CURRENT_EPOCH" --arg POOLID "$MY_POOL_ID" --arg USERID "$MY_USER_ID" --arg GENESISPREF "$THIS_GENESIS" --arg ASSIGNED "$ASSIGNED_SLOTS"  '{currentepoch: $CURRENTEPOCH, poolid: $POOLID,  genesispref: $GENESISPREF, userid: $USERID, assigned_slots: $ASSIGNED}')"
+## IF WE GET TO HERE THEN NEITHER VERIFICATION METHOD IS BEING USED. JUST SEND CURRENT SLOTS
+JSON="$(jq -n --compact-output --arg CURRENTEPOCH "$CURRENT_EPOCH" --arg POOLID "$MY_POOL_ID" --arg USERID "$MY_USER_ID" --arg GENESISPREF "$THIS_GENESIS" --arg ASSIGNED "$ASSIGNED_SLOTS" '{currentepoch: $CURRENTEPOCH, poolid: $POOLID, genesispref: $GENESISPREF, userid: $USERID, assigned_slots: $ASSIGNED}')"
+echo "Packet Sent: $JSON"
+echo "Response Received: $(curl -s -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "$JSON" "https://api.pooltool.io/v0/sendlogs")"
 
-echo "Packet Sent:"
-echo "$JSON"
-
-RESPONSE=$(curl -s -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "$JSON" "https://api.pooltool.io/v0/sendlogs")
-
-echo "Response Received:"
-echo "$RESPONSE"
+exit 5
