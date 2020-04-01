@@ -40,7 +40,7 @@ fi
 
 ## LET'S SET THE REST API URL FOR CURL
 if [ ! "$JORMUNGANDR_RESTAPI" ]; then
-    JORMUNGANDR_RESTAPI=http://127.0.0.1:${RESTAPI_PORT}/api/v0
+    JORMUNGANDR_RESTAPI=http://127.0.0.1:${RESTAPI_PORT}
 fi
 
 ## CALCULATING THE NEEDED EPOCHS
@@ -50,7 +50,7 @@ CURRENT_EPOCH=$(((elapsed / 86400)))
 PREVIOUS_EPOCH=$((CURRENT_EPOCH - 1))
 
 ## RETRIEVING LEADER SLOTS ASSIGNED IN CURRENT EPOCH
-CURRENT_SLOTS=$(curl -s ${JORMUNGANDR_RESTAPI}/leaders/logs | jq -c '[ .[] | select(.scheduled_at_date | startswith('\"$CURRENT_EPOCH\"')) ]')
+CURRENT_SLOTS=$(curl -s ${JORMUNGANDR_RESTAPI}/api/v0/leaders/logs | jq -c '[ .[] | select(.scheduled_at_date | startswith('\"$CURRENT_EPOCH\"')) ]')
 ASSIGNED_SLOTS=$(echo "$CURRENT_SLOTS" | jq '. | length')
 
 ## GPG SIGNING AND SEND TO POOL TOOL
