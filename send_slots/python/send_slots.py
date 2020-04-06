@@ -127,7 +127,7 @@ class Slots():
                 print('stdout: {}\nstderr:{}'.format(stdout.decode(), stderr.decode()))
                 sys.exit(1)
 
-            return stdout.decode()
+            return stdout.decode().rstrip()
         except Exception as e:
             print('Error: Failed to generate new key')
             print(e)
@@ -139,7 +139,8 @@ class Slots():
         stdout = None
         stderr = None
         try:
-            cmd1 = ["echo", json.dumps(self._current_slots)]
+            slots_to_encrpyt = json.dumps(self._current_slots) if (len(self._current_slots) > 0) else '[]'
+            cmd1 = ["echo", slots_to_encrpyt]
             proc1 = Popen(cmd1, stdout=PIPE, stdin=PIPE, stderr=PIPE)
             cmd2 = ["gpg", "--symmetric", "--armor", "--batch", "--passphrase", self._current_epoch_key]
             proc2 = Popen(cmd2, stdout=PIPE, stdin=proc1.stdout, stderr=PIPE)
@@ -155,7 +156,7 @@ class Slots():
 
             sys.exit(1)
 
-        return stdout.decode()
+        return stdout.decode().rstrip()
 
     def _verify_slots_gpg(self):
         previous_epoch_passphrase_filename = '{key_path}{s}passphrase_{epoch}'.format(key_path=self._p['key_path'], s=os.sep, epoch=self._previous_epoch)
@@ -263,13 +264,11 @@ def show_invalid_params(invalid_params, params):
 def show_help(program_name, params):
     print("{} [ -g [0|1] | -s [0|1] ] [OPTION]....".format(program_name))
     print()
-    print("One or more variables not set:")
-    print()
     print("Mandatory parameters (without any defaults):")
     print("-i, {:<30} {}".format("--pool-id=POOL_ID", "Stake pool id"))
     print("-u, {:<30} {}".format("--user-id=USER_ID", "PoolTool user id"))
     print()
-    print("Optional parameters with defaults fallback values:")
+    print("Optional parameters with default fallback values:")
     print("-g, {:<30} {}".format("--verify-gpg=BOOL", "Determines what you upload to pooltool, default: 0, BOOL:[0,1]"))
     print("-s, {:<30} {}".format("--verify-hash=BOOL", "Determines what you upload to pooltool, default: 0, BOOL:[0,1]"))
     url = params['jormungandr_restapi'].format(rest_api_port=params['restapi_port'])
