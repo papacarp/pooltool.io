@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #MY_POOL_ID="<POOLID>"
 #MY_USER_ID="<USERID>" # on pooltool website get this from your account profile page

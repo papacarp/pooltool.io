@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ## CHANGE THESE TO SUITE YOUR POOL
 # your pool id as on the explorer
