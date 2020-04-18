@@ -1,0 +1,17 @@
+{
+  "blockRecvCnt": 353,
+  "lastBlockContentSize": 315,
+  "lastBlockDate": "34.3975",
+  "lastBlockFees": 800000,
+  "lastBlockHash": "3b86015ceae5ecb3b46c794e8869b054c1f08d8c70f59e95167603ccd6e278c0",
+  "lastBlockHeight": "104500",
+  "lastBlockSum": 786206000,
+  "lastBlockTime": "2020-01-16T21:26:07+00:00",
+  "lastBlockTx": 1,
+  "lastReceivedBlockTime": "2020-01-16T21:26:08+00:00",
+  "state": "Running",
+  "txRecvCnt": 323,
+  "uptime": 7366,
+  "version": "jormungandr 0.8.6-76863977"
+}
+
