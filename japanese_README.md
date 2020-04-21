@@ -1,5 +1,5 @@
 # Cardano PoolToolのアカウント登録方法
-（How to creat PoolTool account)
+（How to create a PoolTool account)
 
 ## 01
 <img src="images/jp_1.jpg" width="512" >
