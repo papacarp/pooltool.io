@@ -21,7 +21,7 @@ if [ -z "$PT_TOPOLOGY_FILE" ]; then
 PT_TOPOLOGY_FILE="$CNODE_HOME/files/ff-topology-buddies.json"
 fi
 
-JSON="$(jq -n --compact-output --arg MY_API_KEY "$PT_MY_API_KEY" --arg MY_POOL_ID "$PT_MY_POOL_ID" --arg MY_NODE_ID "$PT_MY_NODE_ID" '{apiKey: $PT_MY_API_KEY, nodeId: $PT_MY_NODE_ID, poolId: $PT_MY_POOL_ID}')"
+JSON="$(jq -n --compact-output --arg MY_API_KEY "$PT_MY_API_KEY" --arg MY_POOL_ID "$PT_MY_POOL_ID" --arg MY_NODE_ID "$PT_MY_NODE_ID" '{apiKey: $MY_API_KEY, nodeId: $MY_NODE_ID, poolId: $MY_POOL_ID}')"
 echo "Packet Sent: $JSON"
 RESPONSE="$(curl -s -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "$JSON" "https://api.pooltool.io/v0/getbuddies")"
 SUCCESS="$(echo $RESPONSE | jq '.success')"
