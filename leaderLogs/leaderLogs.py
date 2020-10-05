@@ -1,15 +1,7 @@
 # leader logs proof of concept - all credit goes to @andrewwestberg of BCSH for the algo extraction from cardano-node
-# Current issue:  I suspect a precision and/or big integer math issue resulting in far more slots than expected in the isSlotLeader function.
-# For example
-# certNat = 91829741963481555176272775124811557118579219617852200004823836275117288794553889298345298218949459449673836160366
-# certNatMax = 1.3407807929942597e+154
-# denominator (certNatMax - certNat) = 1.3407807929942597e+154
-# q (certNatMax / denominator) = 1.0
 
-import json
 import math
 import binascii
-import sys
 import hashlib
 from ctypes import *
 
@@ -83,14 +75,11 @@ def getSigma(poolId):
 
     return float(bs[poolId]/total_bs)
 
-
-
 def mkSeed(slot,eta0):
+
     h = hashlib.blake2b(digest_size=32)
     h.update(bytearray([0,0,0,0,0,0,0,1])) #neutral nonce
     seedLbytes=h.digest()
-
-    byt_combined = slot.to_bytes(8,byteorder='big') + binascii.unhexlify(eta0)
 
     h = hashlib.blake2b(digest_size=32)
     h.update(slot.to_bytes(8,byteorder='big') + binascii.unhexlify(eta0))
@@ -98,7 +87,7 @@ def mkSeed(slot,eta0):
 
     seed = [x ^ slotToSeedBytes[i] for i,x in enumerate(seedLbytes)]
 
-    return bytearray(seed)
+    return bytes(seed)
 
 
 
@@ -112,7 +101,7 @@ def vrfEvalCertified(seed, tpraosCanBeLeaderSignKeyVRF):
 
         libsodium.crypto_vrf_proof_to_hash(proofHash,proof)
 
-        return binascii.b2a_hex(proofHash.raw).decode("utf-8")
+        return proofHash.raw
 
     else:
         print("error.  Feed me bytes")
@@ -121,37 +110,21 @@ def vrfEvalCertified(seed, tpraosCanBeLeaderSignKeyVRF):
 
 # Determine if our pool is a slot leader for this given slot
 # @param slot The slot to check
-# @param f The activeSlotsCoeff value from protocol params
+# @param activeSlotCoeff The activeSlotsCoeff value from protocol params
 # @param sigma The controlled stake proportion for the pool
 # @param eta0 The epoch nonce value
 # @param poolVrfSkey The vrf signing key for the pool
 
 def isSlotLeader(slot,activeSlotCoeff,sigma,eta0,poolVrfSkey):
-    seed = mkSeed(slot, eta0) # returns binary already
-
-    seedb = binascii.unhexlify(seed.hex())
+    seed = mkSeed(slot, eta0)
     tpraosCanBeLeaderSignKeyVRFb = binascii.unhexlify(poolVrfSkey)
-
-    cert=vrfEvalCertified(seedb,tpraosCanBeLeaderSignKeyVRFb)
-
-    #add 00 to make sure we don't get a negative number by accident
-
-    certNat  = int("0x00" + cert, 0)
-    #print("certNat = " + str(certNat))
-
+    cert=vrfEvalCertified(seed,tpraosCanBeLeaderSignKeyVRFb)
+    certNat  = int.from_bytes(cert, byteorder="big", signed=False)
     certNatMax = math.pow(2,512)
-    #print("certNatMax = " + str(certNatMax))
-
     denominator = certNatMax - certNat
-    #print("denominator (certNatMax - certNat) = " + str(denominator))
-
     q = certNatMax / denominator
-    #print("q (certNatMax / denominator) = "  + str(q))
-
     c = math.log(1.0 - activeSlotCoeff)
-
     sigmaOfF = math.exp(-sigma * c)
-    #print("vals",q,sigmaOfF)
     return q <= sigmaOfF
 
 
@@ -165,7 +138,4 @@ for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
     if slotLeader:
         slotcount+=1
         print("Leader for " +str(slot) + ", Cumulative epoch blocks: " + str(slotcount))
-
-
-
 
