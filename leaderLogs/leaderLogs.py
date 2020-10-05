@@ -24,7 +24,7 @@ local_tz = pytz.timezone('America/Los_angeles') # use your local timezone name h
 epoch=221
 poolId="95c4956f7a137f7fe9c72f2e831e6038744b6307d00143b2447e6443"
 sigma = 0.010052348379780869 # note function to pull data from ledger state is below.  its just faster to hard code it for testing
-# grab this from  your pool key set
+# grab this from  your pool key set.  Make sure you strip off the first 4 characters (the CBOR header) so your Skey is the exact same length as the example shown here
 poolVrfSkey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxa51b5e76dfd68dd77ae"
 eta0 = "5ee77854fe91cc243b8d5589de3192e795f162097dba7501f8d1b0d5d7546bd5" # value is for epoch 221
 
