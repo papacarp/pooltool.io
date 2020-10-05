@@ -2,6 +2,8 @@
 
 import math
 import binascii
+from datetime import datetime, timezone
+import pytz
 import hashlib
 from ctypes import *
 
@@ -18,6 +20,7 @@ epoch211firstslot = 5788800
 decentralizationParam = 0.62
 
 # more hard coded values
+local_tz = pytz.timezone('America/Los_angeles') # use your local timezone name here
 epoch=221
 poolId="95c4956f7a137f7fe9c72f2e831e6038744b6307d00143b2447e6443"
 sigma = 0.010052348379780869 # note function to pull data from ledger state is below.  its just faster to hard code it for testing
@@ -137,5 +140,6 @@ for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
 
     if slotLeader:
         slotcount+=1
-        print("Leader for " +str(slot) + ", Cumulative epoch blocks: " + str(slotcount))
+        timestamp = datetime.fromtimestamp(slot + 1591566291, tz=local_tz)
+        print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Leader for " +str(slot) + ", Cumulative epoch blocks: " + str(slotcount))
 
