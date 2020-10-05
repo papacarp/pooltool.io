@@ -116,10 +116,11 @@ def vrfEvalCertified(seed, tpraosCanBeLeaderSignKeyVRF):
 
         libsodium.crypto_vrf_proof_to_hash(proofHash,proof)
 
-        return proofHash.value.hex()
+        return binascii.b2a_hex(proofHash.raw).decode("utf-8")
 
     else:
         print("error.  Feed me bytes")
+        exit()
 
 
 # Determine if our pool is a slot leader for this given slot
