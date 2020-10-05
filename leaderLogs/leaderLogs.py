@@ -11,10 +11,6 @@ import math
 import binascii
 import sys
 import hashlib
-import psycopg2
-import psycopg2.extras
-from psycopg2.extras import Json
-from nacl._sodium import ffi, lib
 from ctypes import *
 
 
