@@ -141,5 +141,5 @@ for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
     if slotLeader:
         slotcount+=1
         timestamp = datetime.fromtimestamp(slot + 1591566291, tz=local_tz)
-        print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Leader for " +str(slot) + ", Cumulative epoch blocks: " + str(slotcount))
+        print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Leader for slot " +str(slot-firstSlotOfEpoch) + ", Cumulative epoch blocks: " + str(slotcount))
 
