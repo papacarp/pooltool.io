@@ -29,7 +29,7 @@ with open(args.skey) as f:
     skey = json.load(f)
 
 poolVrfSkey = skey['cborHex'][4:]
-print(poolVrfSkey)
+#print(poolVrfSkey)
 
 # Bindings are not avaliable so using ctypes to just force it in for now.
 libsodium = cdll.LoadLibrary("/usr/local/lib/libsodium.so")
