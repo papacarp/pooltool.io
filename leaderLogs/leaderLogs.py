@@ -7,6 +7,29 @@ import pytz
 import hashlib
 from ctypes import *
 
+import json
+import argparse
+
+parser = argparse.ArgumentParser(description="Calculate the leadership log.")
+parser.add_argument('--pool-id', dest='poolId', help='the pool ID', required=True)
+parser.add_argument('--epoch', dest='epoch', help='the epoch number [e.g. 221]', type=int, required=True)
+parser.add_argument('--epoch-nonce', dest='eta0', help='the epoch nonce to check', required=True)
+parser.add_argument('--vrf-skey', dest='skey', help='provide the path to the pool.vrf.skey file', required=True)
+parser.add_argument('--sigma', dest='sigma', type=float, help='the controlled stake sigma value of the pool', required=True)
+
+args = parser.parse_args()
+
+epoch = args.epoch
+poolId = args.poolId
+sigma = args.sigma
+#poolVrfSkey = args.skey
+eta0 = args.eta0
+
+with open(args.skey) as f:
+    skey = json.load(f)
+
+poolVrfSkey = skey['cborHex'][4:]
+print(poolVrfSkey)
 
 # Bindings are not avaliable so using ctypes to just force it in for now.
 libsodium = cdll.LoadLibrary("/usr/local/lib/libsodium.so")
@@ -21,12 +44,12 @@ decentralizationParam = 0.62
 
 # more hard coded values
 local_tz = pytz.timezone('America/Los_angeles') # use your local timezone name here
-epoch=221
-poolId="95c4956f7a137f7fe9c72f2e831e6038744b6307d00143b2447e6443"
-sigma = 0.010052348379780869 # note function to pull data from ledger state is below.  its just faster to hard code it for testing
+#epoch=221
+#poolId="95c4956f7a137f7fe9c72f2e831e6038744b6307d00143b2447e6443"
+#sigma = 0.010052348379780869 # note function to pull data from ledger state is below.  its just faster to hard code it for testing
 # grab this from  your pool key set.  Make sure you strip off the first 4 characters (the CBOR header) so your Skey is the exact same length as the example shown here
-poolVrfSkey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxa51b5e76dfd68dd77ae"
-eta0 = "5ee77854fe91cc243b8d5589de3192e795f162097dba7501f8d1b0d5d7546bd5" # value is for epoch 221
+#poolVrfSkey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxa51b5e76dfd68dd77ae"
+#eta0 = "5ee77854fe91cc243b8d5589de3192e795f162097dba7501f8d1b0d5d7546bd5" # value is for epoch 221
 
 firstSlotOfEpoch = 5788800 + (epoch - 211)*epochLength
 
