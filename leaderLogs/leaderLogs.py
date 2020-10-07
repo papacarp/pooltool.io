@@ -7,22 +7,27 @@ import pytz
 import hashlib
 from ctypes import *
 
+from urllib.request import urlopen
 import json
 import argparse
 
 parser = argparse.ArgumentParser(description="Calculate the leadership log.")
-parser.add_argument('--pool-id', dest='poolId', help='the pool ID', required=True)
-parser.add_argument('--epoch', dest='epoch', help='the epoch number [e.g. 221]', type=int, required=True)
-parser.add_argument('--epoch-nonce', dest='eta0', help='the epoch nonce to check', required=True)
+parser.add_argument('--pool-id', dest='poolId', help='the pool ID')
+parser.add_argument('--epoch', dest='epoch', type=int, help='the epoch number [e.g. 221]')
+parser.add_argument('--epoch-nonce', dest='eta0', help='the epoch nonce to check')
 parser.add_argument('--vrf-skey', dest='skey', help='provide the path to the pool.vrf.skey file', required=True)
 parser.add_argument('--sigma', dest='sigma', type=float, help='the controlled stake sigma value of the pool (e.g. 0.0034052348379780869', required=True)
+parser.add_argument('--d-param', dest='d', type=float, help='the current decentralization parameter [0.0 - 1.0]')
 
 args = parser.parse_args()
 
-epoch = args.epoch
+epoch_data = json.loads(urlopen("https://epoch-api.crypto2099.io:2096/epoch").read().decode("utf-8"))
+
+epoch = args.epoch or epoch_data['number']
 poolId = args.poolId
 sigma = args.sigma
-eta0 = args.eta0
+eta0 = args.eta0 or epoch_data['eta0']
+decentralizationParam = args.d or epoch_data['d']
 
 with open(args.skey) as f:
     skey = json.load(f)
@@ -38,7 +43,6 @@ epochLength = 432000
 activeSlotCoeff = 0.05
 slotLength = 1
 epoch211firstslot = 5788800
-decentralizationParam = 0.62
 
 # more hard coded values
 local_tz = pytz.timezone('America/Los_angeles') # use your local timezone name here
