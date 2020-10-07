@@ -12,12 +12,12 @@ import json
 import argparse
 
 parser = argparse.ArgumentParser(description="Calculate the leadership log.")
+parser.add_argument('--vrf-skey', dest='skey', help='provide the path to the pool.vrf.skey file', required=True)
+parser.add_argument('--sigma', dest='sigma', type=float, help='the controlled stake sigma value of the pool [e.g. 0.0034052348379780869]', required=True)
 parser.add_argument('--pool-id', dest='poolId', help='the pool ID')
 parser.add_argument('--epoch', dest='epoch', type=int, help='the epoch number [e.g. 221]')
 parser.add_argument('--epoch-nonce', dest='eta0', help='the epoch nonce to check')
-parser.add_argument('--vrf-skey', dest='skey', help='provide the path to the pool.vrf.skey file', required=True)
-parser.add_argument('--sigma', dest='sigma', type=float, help='the controlled stake sigma value of the pool (e.g. 0.0034052348379780869', required=True)
-parser.add_argument('--d-param', dest='d', type=float, help='the current decentralization parameter [0.0 - 1.0]')
+parser.add_argument('--d-param', dest='d', type=float, help='the current decentralization parameter [e.g. 0.0 - 1.0]')
 
 args = parser.parse_args()
 
@@ -47,6 +47,8 @@ epoch211firstslot = 5788800
 # more hard coded values
 local_tz = pytz.timezone('America/Los_angeles') # use your local timezone name here
 firstSlotOfEpoch = 5788800 + (epoch - 211)*epochLength
+
+print("Checking leadership log for Epoch",epoch,"[ d Param:",decentralizationParam,"]")
 
 def isOverlaySlot(firstSlotOfEpoch, currentSlot, decentralizationParam):
    diff_slot = float(currentSlot - firstSlotOfEpoch)
