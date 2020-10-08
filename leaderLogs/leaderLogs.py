@@ -12,12 +12,12 @@ import json
 import argparse
 
 parser = argparse.ArgumentParser(description="Calculate the leadership log.")
+parser.add_argument('--vrf-skey', dest='skey', help='provide the path to the pool.vrf.skey file', required=True)
+parser.add_argument('--sigma', dest='sigma', type=float, help='the controlled stake sigma value of the pool [e.g. 0.0034052348379780869]', required=True)
 parser.add_argument('--pool-id', dest='poolId', help='the pool ID')
 parser.add_argument('--epoch', dest='epoch', type=int, help='the epoch number [e.g. 221]')
 parser.add_argument('--epoch-nonce', dest='eta0', help='the epoch nonce to check')
-parser.add_argument('--vrf-skey', dest='skey', help='provide the path to the pool.vrf.skey file', required=True)
-parser.add_argument('--sigma', dest='sigma', type=float, help='the controlled stake sigma value of the pool (e.g. 0.0034052348379780869', required=True)
-parser.add_argument('--d-param', dest='d', type=float, help='the current decentralization parameter [0.0 - 1.0]')
+parser.add_argument('--d-param', dest='d', type=float, help='the current decentralization parameter [e.g. 0.0 - 1.0]')
 
 args = parser.parse_args()
 
@@ -48,53 +48,13 @@ epoch211firstslot = 5788800
 local_tz = pytz.timezone('America/Los_angeles') # use your local timezone name here
 firstSlotOfEpoch = 5788800 + (epoch - 211)*epochLength
 
+print("Checking leadership log for Epoch",epoch,"[ d Param:",decentralizationParam,"]")
+
 def isOverlaySlot(firstSlotOfEpoch, currentSlot, decentralizationParam):
    diff_slot = float(currentSlot - firstSlotOfEpoch)
    if math.ceil( diff_slot * decentralizationParam ) < math.ceil( (diff_slot + 1) * decentralizationParam ):
       return True
    return False
-
-
-def getSigma(poolId):
-    blockstakedelegators={}
-    blockstake={}
-    bs={}
-    print("building active stake")
-    for item2 in ledger['esSnapshots']["_pstakeSet"]['_delegations']:
-        keyhashobj = []
-        for itemsmall in item2:
-            if 'key hash' in itemsmall:
-
-                keyhashobj.append(itemsmall['key hash'])
-            else:
-                poolid = itemsmall
-        if poolid not in blockstakedelegators:
-            blockstakedelegators[poolid]=keyhashobj
-        else:
-            blockstakedelegators[poolid]=blockstakedelegators[poolid]+keyhashobj
-
-    for item2 in ledger['esSnapshots']["_pstakeSet"]['_stake']:
-        delegatorid = None
-        for itemsmall in item2:
-            if isinstance(itemsmall,int):
-                snapstake = itemsmall
-            else:
-                delegatorid=itemsmall['key hash']
-        if delegatorid != None:
-            if delegatorid not in blockstake:
-                blockstake[delegatorid]=snapstake
-            else:
-                blockstake[delegatorid]=blockstake[delegatorid]+snapstake
-    total_bs=0
-    for poolid in blockstakedelegators:
-        bs[poolid]=0
-        for d in blockstakedelegators[poolid]:
-            if d in blockstake:
-                bs[poolid]=bs[poolid]+blockstake[d]
-                total_bs=total_bs + blockstake[d]
-
-
-    return float(bs[poolId]/total_bs)
 
 def mkSeed(slot,eta0):
 
@@ -109,8 +69,6 @@ def mkSeed(slot,eta0):
     seed = [x ^ slotToSeedBytes[i] for i,x in enumerate(seedLbytes)]
 
     return bytes(seed)
-
-
 
 def vrfEvalCertified(seed, tpraosCanBeLeaderSignKeyVRF):
     if isinstance(seed, bytes) and isinstance(tpraosCanBeLeaderSignKeyVRF, bytes):
@@ -127,7 +85,6 @@ def vrfEvalCertified(seed, tpraosCanBeLeaderSignKeyVRF):
     else:
         print("error.  Feed me bytes")
         exit()
-
 
 # Determine if our pool is a slot leader for this given slot
 # @param slot The slot to check
@@ -147,7 +104,6 @@ def isSlotLeader(slot,activeSlotCoeff,sigma,eta0,poolVrfSkey):
     c = math.log(1.0 - activeSlotCoeff)
     sigmaOfF = math.exp(-sigma * c)
     return q <= sigmaOfF
-
 
 slotcount=0
 for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
