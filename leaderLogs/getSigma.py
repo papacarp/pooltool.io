@@ -9,7 +9,7 @@ parser.add_argument('--ledger', dest='ledger', default='ledger.json', help='the 
 
 args = parser.parse_args()
 
-poolid = args.id
+poolId = args.id
 ledger = args.ledger
 
 if not path.exists(ledger):
@@ -20,46 +20,42 @@ if not path.exists(ledger):
 with open(ledger) as f:
     ledger = json.load(f)
 
-def getSigma(poolId):
-    blockstakedelegators={}
-    blockstake={}
-    bs={}
-    print("building active stake")
-    for item2 in ledger['esSnapshots']["_pstakeSet"]['_delegations']:
-        keyhashobj = []
-        for itemsmall in item2:
-            if 'key hash' in itemsmall:
-
-                keyhashobj.append(itemsmall['key hash'])
-            else:
-                poolid = itemsmall
-        if poolid not in blockstakedelegators:
-            blockstakedelegators[poolid]=keyhashobj
+blockstakedelegators={}
+blockstake={}
+bs={}
+print("building active stake")
+for item2 in ledger['esSnapshots']["_pstakeSet"]['_delegations']:
+    keyhashobj = []
+    for itemsmall in item2:
+        if 'key hash' in itemsmall:
+            keyhashobj.append(itemsmall['key hash'])
         else:
-            blockstakedelegators[poolid]=blockstakedelegators[poolid]+keyhashobj
+            poolid = itemsmall
+    if poolid not in blockstakedelegators:
+        blockstakedelegators[poolid]=keyhashobj
+    else:
+        blockstakedelegators[poolid]=blockstakedelegators[poolid]+keyhashobj
 
-    for item2 in ledger['esSnapshots']["_pstakeSet"]['_stake']:
-        delegatorid = None
-        for itemsmall in item2:
-            if isinstance(itemsmall,int):
-                snapstake = itemsmall
-            else:
-                delegatorid=itemsmall['key hash']
-        if delegatorid != None:
-            if delegatorid not in blockstake:
-                blockstake[delegatorid]=snapstake
-            else:
-                blockstake[delegatorid]=blockstake[delegatorid]+snapstake
-    total_bs=0
-    for poolid in blockstakedelegators:
-        bs[poolid]=0
-        for d in blockstakedelegators[poolid]:
-            if d in blockstake:
-                bs[poolid]=bs[poolid]+blockstake[d]
-                total_bs=total_bs + blockstake[d]
+for item2 in ledger['esSnapshots']["_pstakeSet"]['_stake']:
+    delegatorid = None
+    for itemsmall in item2:
+        if isinstance(itemsmall,int):
+            snapstake = itemsmall
+        else:
+            delegatorid=itemsmall['key hash']
+    if delegatorid != None:
+        if delegatorid not in blockstake:
+            blockstake[delegatorid]=snapstake
+        else:
+            blockstake[delegatorid]=blockstake[delegatorid]+snapstake
+total_bs=0
+for poolid in blockstakedelegators:
+    bs[poolid]=0
+    for d in blockstakedelegators[poolid]:
+        if d in blockstake:
+            bs[poolid]=bs[poolid]+blockstake[d]
+            total_bs=total_bs + blockstake[d]
 
+sigma = float(bs[poolId]/total_bs)
 
-    return float(bs[poolId]/total_bs)
-
-
-print(getSigma(poolid))
+print("Sigma:",sigma)
