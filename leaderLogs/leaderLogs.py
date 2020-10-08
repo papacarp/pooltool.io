@@ -18,6 +18,7 @@ parser.add_argument('--pool-id', dest='poolId', help='the pool ID')
 parser.add_argument('--epoch', dest='epoch', type=int, help='the epoch number [e.g. 221]')
 parser.add_argument('--epoch-nonce', dest='eta0', help='the epoch nonce to check')
 parser.add_argument('--d-param', dest='d', type=float, help='the current decentralization parameter [e.g. 0.0 - 1.0]')
+parser.add_argument('-bft', action='store_true', help='if specified will also calculate slots stolen by BFT due to d not being 0')
 
 args = parser.parse_args()
 
@@ -108,8 +109,12 @@ def isSlotLeader(slot,activeSlotCoeff,sigma,eta0,poolVrfSkey):
 slotcount=0
 stolencount=0
 for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
-    slotLeader = isSlotLeader(slot, activeSlotCoeff, sigma, eta0, poolVrfSkey)
     overlaySlot = isOverlaySlot(firstSlotOfEpoch, slot, decentralizationParam)
+    if overlaySlot and not args.bft:
+      continue
+    
+    slotLeader = isSlotLeader(slot, activeSlotCoeff, sigma, eta0, poolVrfSkey)
+    
     if slotLeader:
         timestamp = datetime.fromtimestamp(slot + 1591566291, tz=local_tz)
         if overlaySlot:
