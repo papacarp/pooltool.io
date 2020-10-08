@@ -106,14 +106,18 @@ def isSlotLeader(slot,activeSlotCoeff,sigma,eta0,poolVrfSkey):
     return q <= sigmaOfF
 
 slotcount=0
+stolencount=0
 for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
-    if isOverlaySlot(firstSlotOfEpoch,slot,decentralizationParam):
-        continue
-
-    slotLeader = isSlotLeader(slot,activeSlotCoeff,sigma,eta0,poolVrfSkey)
-
+    slotLeader = isSlotLeader(slot, activeSlotCoeff, sigma, eta0, poolVrfSkey)
+    overlaySlot = isOverlaySlot(firstSlotOfEpoch, slot, decentralizationParam)
     if slotLeader:
-        slotcount+=1
         timestamp = datetime.fromtimestamp(slot + 1591566291, tz=local_tz)
-        print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Leader for slot " +str(slot-firstSlotOfEpoch) + ", Cumulative epoch blocks: " + str(slotcount))
+        if overlaySlot:
+            stolencount+=1
+            print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Stolen by BFT for " + str(slot-firstSlotOfEpoch) + ", Cumulative stolen blocks due to d param: " + str(stolencount))
+        else:
+            slotcount+=1
+            print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Leader for " + str(slot-firstSlotOfEpoch) + ", Cumulative epoch blocks: " + str(slotcount))
 
+if (slotcount == 0 and stolencount == 0):
+  print("No slots found for current epoch... :(")
