@@ -101,7 +101,7 @@ The following snippets show example script usage and expected output. Make sure
 when using in your case that you change the command arguments to values that are
 accurate for your pool.
 
-#### Simple Usage with Custom Timezone
+#### Simple Usage
 ```shell
 foo@bar:~$ python3 leaderLogs.py --vrf-skey /path/to/my/pool.vrf.skey --sigma 0.001234567890123456
 Checking leadership log for Epoch 222 [ d Param: 0.6 ]
