@@ -2,8 +2,8 @@
 
 These utility scripts allow a Stake Pool Operator to check the slot leadership schedule
 for their stake pool. The logic contained herein is thanks to the hard work of [Andrew
-Westberg](https://github.com/amw7) (developer of JorManager and operator of BCSH family
-of stake pools).
+Westberg](https://github.com/AndrewWestberg) (developer of JorManager and operator of 
+the BCSH family of stake pools).
 
 ## getSigma.py Details
 
@@ -53,17 +53,74 @@ user@foo:~$ python3 pip -m install pytz
 ```
 ### Arguments
 
-#### --vrf-skey PATH
+#### --vrf-skey PATH [/path/to/my/pool.vrf.skey]
 
 ***Required***. Provide the path to the complete *pool.vrf.skey* file. This will be
 parsed automatically by the script extract the necessary portion of the CBORHex key.
 
-#### --sigma FLOAT
+#### --sigma FLOAT [0.001234567890123456]
 
 ***Required***. Provide the 18-decimal precise sigma value from the pool. You can
 use the value returned by *getSigma.py* above to acquire this value.
 
-**Note:** By the default the script will attempt to fetch epoch details from
-[https://epoch-api.crypto2099.io](https://epoch-api.crypto2099.io:2096/epoch). If
-the api is unavailable or you would like to test against another epoch or test 
-network you can use the arguments below to override these settings.
+#### --tz STRING [America/Los_Angeles]
+
+***Optional***. Default: America/Los_Angeles. Provide the string timezone name of
+your timezone to this argument to cast the slot leadership schedule times into your
+local timezone.
+
+> **Note:** By the default the script will attempt to fetch epoch details from
+> [https://epoch-api.crypto2099.io](https://epoch-api.crypto2099.io:2096/epoch). If
+> the api is unavailable or you would like to test against another epoch or test 
+> network you can use the arguments below to override these settings.
+
+#### --epoch INTEGER [222]
+
+***Optional***. Default: Current epoch from API. Provide the epoch number you would
+like to check for the leadership schedule of.
+
+#### --epoch-nonce STRING [171625aef5357dfccfeaeedecd5de49f71fb6e05953f2799d3ff84419dbef0ac]
+
+***Optional***. Default: Current epoch nonce (eta0) from API. Provide the epoch nonce
+for the epoch you are checking the leadership schedule of.
+
+#### --d-param FLOAT [0.6]
+
+***Optional***. Default: Current *d* parameter from API. Provide the current *d*
+(decentralization) parameter of the network for the epoch you are checking the
+leadership of.
+
+#### --pool-id STRING [123456789abcdefxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]
+
+***UNUSED***. This parameter is currently unused but has been left in the script
+for future support.
+
+### Usage
+
+The following snippets show example script usage and expected output. Make sure
+when using in your case that you change the command arguments to values that are
+accurate for your pool.
+
+#### Simple Usage with Custom Timezone
+```shell
+foo@bar:~$ python3 leaderLogs.py --vrf-skey /path/to/my/pool.vrf.skey --sigma 0.001234567890123456
+Checking leadership log for Epoch 222 [ d Param: 0.6 ]
+2020-10-07 17:50:35 ==> Leader for 10551944, Cumulative epoch blocks: 1
+...
+2020-10-12 08:05:33 ==> Leader for 10948842, Cumulative epoch blocks: 10
+```
+
+#### Advanced Usage with All Arguments
+```shell
+foo@bar:~$ python3 leaderLogs.py \
+> --vrf-skey /path/to/my/pool.vrf.skey \
+> --sigma 0.001234567890123456 \
+> --tz America/New_York \
+> --epoch 222 \
+> --epoch-nonce 171625aef5357dfccfeaeedecd5de49f71fb6e05953f2799d3ff84419dbef0ac \
+> --d-param 0.6 \
+Checking leadership log for Epoch 222 [ d Param: 0.6 ]
+2020-10-07 20:50:35 ==> Leader for 10551944, Cumulative epoch blocks: 1
+...
+2020-10-12 11:05:33 ==> Leader for 10948842, Cumulative epoch blocks: 10
+```
