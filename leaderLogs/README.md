@@ -67,7 +67,7 @@ use the value returned by *getSigma.py* above to acquire this value.
 
 ***Optional***. Default: America/Los_Angeles. Provide the string timezone name of
 your timezone to this argument to cast the slot leadership schedule times into your
-local timezone.
+local timezone. [List of Valid Timezones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
 
 > **Note:** By the default the script will attempt to fetch epoch details from
 > [https://epoch-api.crypto2099.io](https://epoch-api.crypto2099.io:2096/epoch). If
