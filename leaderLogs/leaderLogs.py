@@ -18,7 +18,9 @@ parser.add_argument('--pool-id', dest='poolId', help='the pool ID')
 parser.add_argument('--epoch', dest='epoch', type=int, help='the epoch number [e.g. 221]')
 parser.add_argument('--epoch-nonce', dest='eta0', help='the epoch nonce to check')
 parser.add_argument('--d-param', dest='d', type=float, help='the current decentralization parameter [e.g. 0.0 - 1.0]')
+parser.add_argument('-bft', action='store_true', help='if specified will also calculate slots stolen by BFT due to d not being 0')
 parser.add_argument('--tz', dest='tz', default='America/Los_Angeles', help='the local timezone name [Default: America/Los_Angeles]')
+
 
 args = parser.parse_args()
 
@@ -118,16 +120,28 @@ def isSlotLeader(slot,activeSlotCoeff,sigma,eta0,poolVrfSkey):
     return q <= sigmaOfF
 
 slotcount=0
+stolencount=0
 for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
-    if isOverlaySlot(firstSlotOfEpoch,slot,decentralizationParam):
-        continue
-
-    slotLeader = isSlotLeader(slot,activeSlotCoeff,sigma,eta0,poolVrfSkey)
-
+    overlaySlot = isOverlaySlot(firstSlotOfEpoch, slot, decentralizationParam)
+    if overlaySlot and not args.bft:
+      continue
+    
+    slotLeader = isSlotLeader(slot, activeSlotCoeff, sigma, eta0, poolVrfSkey)
+    
     if slotLeader:
-        slotcount+=1
         timestamp = datetime.fromtimestamp(slot + 1591566291, tz=local_tz)
+
+        if overlaySlot:
+            stolencount+=1
+            print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Stolen by BFT for " + str(slot-firstSlotOfEpoch) + ", Cumulative stolen blocks due to d param: " + str(stolencount))
+        else:
+            slotcount+=1
+            print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Leader for " + str(slot-firstSlotOfEpoch) + ", Cumulative epoch blocks: " + str(slotcount))
+
+
         print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Leader for slot " +str(slot-firstSlotOfEpoch) + ", Cumulative epoch blocks: " + str(slotcount))
 
 if slotcount == 0:
     print("No slots found for current epoch... :(")
+if overlaySlot:
+    print("Slots stolen by BFT nodes: " + str(stolencount))
