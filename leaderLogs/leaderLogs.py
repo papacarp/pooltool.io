@@ -19,16 +19,29 @@ parser.add_argument('--epoch', dest='epoch', type=int, help='the epoch number [e
 parser.add_argument('--epoch-nonce', dest='eta0', help='the epoch nonce to check')
 parser.add_argument('--d-param', dest='d', type=float, help='the current decentralization parameter [e.g. 0.0 - 1.0]')
 parser.add_argument('-bft', action='store_true', help='if specified will also calculate slots stolen by BFT due to d not being 0')
+parser.add_argument('--tz', dest='tz', default='America/Los_Angeles', help='the local timezone name [Default: America/Los_Angeles]')
+
 
 args = parser.parse_args()
 
-epoch_data = json.loads(urlopen("https://epoch-api.crypto2099.io:2096/epoch").read().decode("utf-8"))
+try:
+    page = urlopen("https://epoch-api.crypto2099.io:2096/epoch/")
+    epoch_data = json.loads(page.read().decode("utf-8"))
+except:
+    print("\033[1;31m[WARN]:\033[0m Unable to fetch data from the epoch API.")
 
-epoch = args.epoch or epoch_data['number']
-poolId = args.poolId
-sigma = args.sigma
-eta0 = args.eta0 or epoch_data['eta0']
-decentralizationParam = args.d or epoch_data['d']
+try:
+    epoch = args.epoch or epoch_data['number']
+    poolId = args.poolId
+    sigma = args.sigma
+    eta0 = args.eta0 or epoch_data['eta0']
+    decentralizationParam = args.d or epoch_data['d']
+    local_tz = pytz.timezone(args.tz)
+except:
+    print("\033[1;31m[ERROR]:\033[0m One or more arguments are missing or invalid. Please try again.")
+    parser.format_help()
+    parser.print_help()
+    exit()
 
 with open(args.skey) as f:
     skey = json.load(f)
@@ -46,7 +59,7 @@ slotLength = 1
 epoch211firstslot = 5788800
 
 # more hard coded values
-local_tz = pytz.timezone('America/Los_angeles') # use your local timezone name here
+#local_tz = pytz.timezone('America/Los_Angeles') # use your local timezone name here
 firstSlotOfEpoch = 5788800 + (epoch - 211)*epochLength
 
 print("Checking leadership log for Epoch",epoch,"[ d Param:",decentralizationParam,"]")
@@ -117,6 +130,7 @@ for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
     
     if slotLeader:
         timestamp = datetime.fromtimestamp(slot + 1591566291, tz=local_tz)
+
         if overlaySlot:
             stolencount+=1
             print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Stolen by BFT for " + str(slot-firstSlotOfEpoch) + ", Cumulative stolen blocks due to d param: " + str(stolencount))
@@ -124,5 +138,10 @@ for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
             slotcount+=1
             print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Leader for " + str(slot-firstSlotOfEpoch) + ", Cumulative epoch blocks: " + str(slotcount))
 
-if (slotcount == 0 and stolencount == 0):
-  print("No slots found for current epoch... :(")
+
+        print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Leader for slot " +str(slot-firstSlotOfEpoch) + ", Cumulative epoch blocks: " + str(slotcount))
+
+if slotcount == 0:
+    print("No slots found for current epoch... :(")
+if overlaySlot:
+    print("Slots stolen by BFT nodes: " + str(stolencount))
