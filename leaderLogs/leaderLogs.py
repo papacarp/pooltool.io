@@ -6,19 +6,20 @@ from datetime import datetime, timezone
 import pytz
 import hashlib
 from ctypes import *
+import re
 
 from urllib.request import urlopen
 import json
 import argparse
 
 parser = argparse.ArgumentParser(description="Calculate the leadership log.")
-parser.add_argument('--vrf-skey', dest='skey', help='provide the path to the pool.vrf.skey file', required=True)
+parser.add_argument('--vrf-skey', dest='skey', help='provide the path to the pool.vrf.skey file or the raw skey (128 hex characters)', required=True)
 parser.add_argument('--sigma', dest='sigma', type=float, help='the controlled stake sigma value of the pool [e.g. 0.0034052348379780869]', required=True)
 parser.add_argument('--pool-id', dest='poolId', help='the pool ID')
 parser.add_argument('--epoch', dest='epoch', type=int, help='the epoch number [e.g. 221]')
 parser.add_argument('--epoch-nonce', dest='eta0', help='the epoch nonce to check')
 parser.add_argument('--d-param', dest='d', type=float, help='the current decentralization parameter [e.g. 0.0 - 1.0]')
-parser.add_argument('-bft', action='store_true', help='if specified will also calculate slots stolen by BFT due to d not being 0')
+parser.add_argument('--bft', action='store_true', help='if specified will also calculate slots stolen by BFT due to d not being 0')
 parser.add_argument('--tz', dest='tz', default='America/Los_Angeles', help='the local timezone name [Default: America/Los_Angeles]')
 
 
@@ -43,10 +44,12 @@ except:
     parser.print_help()
     exit()
 
-with open(args.skey) as f:
-    skey = json.load(f)
-
-poolVrfSkey = skey['cborHex'][4:]
+if re.search(r"[a-f0-9]{128}", args.skey):
+    poolVrfSkey = args.skey
+else:
+    with open(args.skey) as f:
+        skey = json.load(f)
+        poolVrfSkey = skey['cborHex'][4:]
 
 # Bindings are not avaliable so using ctypes to just force it in for now.
 libsodium = cdll.LoadLibrary("/usr/local/lib/libsodium.so")
@@ -58,8 +61,7 @@ activeSlotCoeff = 0.05
 slotLength = 1
 epoch211firstslot = 5788800
 
-# more hard coded values
-#local_tz = pytz.timezone('America/Los_Angeles') # use your local timezone name here
+# calculate first slot of target epoch
 firstSlotOfEpoch = 5788800 + (epoch - 211)*epochLength
 
 print("Checking leadership log for Epoch",epoch,"[ d Param:",decentralizationParam,"]")
@@ -125,9 +127,9 @@ for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
     overlaySlot = isOverlaySlot(firstSlotOfEpoch, slot, decentralizationParam)
     if overlaySlot and not args.bft:
       continue
-    
+
     slotLeader = isSlotLeader(slot, activeSlotCoeff, sigma, eta0, poolVrfSkey)
-    
+
     if slotLeader:
         timestamp = datetime.fromtimestamp(slot + 1591566291, tz=local_tz)
 
@@ -137,9 +139,6 @@ for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
         else:
             slotcount+=1
             print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Leader for " + str(slot-firstSlotOfEpoch) + ", Cumulative epoch blocks: " + str(slotcount))
-
-
-        print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Leader for slot " +str(slot-firstSlotOfEpoch) + ", Cumulative epoch blocks: " + str(slotcount))
 
 if slotcount == 0:
     print("No slots found for current epoch... :(")
