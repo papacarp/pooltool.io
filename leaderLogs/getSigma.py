@@ -6,6 +6,7 @@ from os import path
 parser = argparse.ArgumentParser(description="Calculate the sigma value of the specified pool. If you do not provide the path to a ledger file via the --ledger option then the script will look for a ledger.json file in the current directory")
 parser.add_argument('--pool-id', dest='id', help='the pool ID', required=True)
 parser.add_argument('--ledger', dest='ledger', default='ledger.json', help='the path to a current ledger-state JSON file')
+parser.add_argument('--next', action='store_true', help='if specified will provide sigma for the next epoch instead of the current epoch')
 
 args = parser.parse_args()
 
@@ -19,12 +20,18 @@ if not path.exists(ledger):
 
 with open(ledger) as f:
     ledger = json.load(f)
+    
+stakequery="_pstakeSet"
+stakeinfo="active"
+if args.next:
+  stakequery="_pstakeMark"
+  stakeinfo="next"
 
 blockstakedelegators={}
 blockstake={}
 bs={}
-print("building active stake")
-for item2 in ledger['esSnapshots']["_pstakeSet"]['_delegations']:
+print("building "+stakeinfo+" stake")
+for item2 in ledger['esSnapshots'][stakequery]['_delegations']:
     keyhashobj = []
     for itemsmall in item2:
         if 'key hash' in itemsmall:
@@ -36,7 +43,7 @@ for item2 in ledger['esSnapshots']["_pstakeSet"]['_delegations']:
     else:
         blockstakedelegators[poolid]=blockstakedelegators[poolid]+keyhashobj
 
-for item2 in ledger['esSnapshots']["_pstakeSet"]['_stake']:
+for item2 in ledger['esSnapshots'][stakequery]['_stake']:
     delegatorid = None
     for itemsmall in item2:
         if isinstance(itemsmall,int):
