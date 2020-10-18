@@ -24,8 +24,15 @@ parser.add_argument('--tz', dest='tz', default='America/Los_Angeles', help='the 
 
 args = parser.parse_args()
 
+epoch = args.epoch
+if epoch == None:
+   print("\033[94m[INFO]:\033[0m No epoch provided, using latest known epoch.") 
+   url=("https://epoch-api.crypto2099.io:2096/epoch/")
+else:
+   url=("https://epoch-api.crypto2099.io:2096/epoch/"+str(epoch))
+
 try:
-    page = urlopen("https://epoch-api.crypto2099.io:2096/epoch/")
+    page = urlopen(url)
     epoch_data = json.loads(page.read().decode("utf-8"))
 except:
     print("\033[1;31m[WARN]:\033[0m Unable to fetch data from the epoch API.")
