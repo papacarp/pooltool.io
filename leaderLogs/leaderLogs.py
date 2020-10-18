@@ -19,7 +19,7 @@ parser.add_argument('--pool-id', dest='poolId', help='the pool ID')
 parser.add_argument('--epoch', dest='epoch', type=int, help='the epoch number [e.g. 221]')
 parser.add_argument('--epoch-nonce', dest='eta0', help='the epoch nonce to check')
 parser.add_argument('--d-param', dest='d', type=float, help='the current decentralization parameter [e.g. 0.0 - 1.0]')
-parser.add_argument('--bft', action='store_true', help='if specified will also calculate slots stolen by BFT due to d not being 0')
+parser.add_argument('-bft', action='store_true', help='if specified will also calculate slots stolen by BFT due to d not being 0')
 parser.add_argument('--tz', dest='tz', default='America/Los_Angeles', help='the local timezone name [Default: America/Los_Angeles]')
 
 
@@ -27,7 +27,7 @@ args = parser.parse_args()
 
 epoch = args.epoch
 if epoch == None:
-   print("\033[94m[INFO]:\033[0m No epoch provided, using latest known epoch.") 
+   print("\033[94m[INFO]:\033[0m No epoch provided, using latest known epoch.")
    url=("https://epoch-api.crypto2099.io:2096/epoch/")
 else:
    url=("https://epoch-api.crypto2099.io:2096/epoch/"+str(epoch))
