@@ -72,12 +72,17 @@ epoch211firstslot = 5788800
 firstSlotOfEpoch = 5788800 + (epoch - 211)*epochLength
 
 print("Checking leadership log for Epoch",epoch,"[ d Param:",decentralizationParam,"]")
+from decimal import *
+getcontext().prec = 9
+getcontext().rounding = ROUND_HALF_UP
 
 def isOverlaySlot(firstSlotOfEpoch, currentSlot, decentralizationParam):
-   diff_slot = float(currentSlot - firstSlotOfEpoch)
-   if math.ceil( diff_slot * decentralizationParam ) < math.ceil( (diff_slot + 1) * decentralizationParam ):
-      return True
-   return False
+    diff_slot = float(currentSlot - firstSlotOfEpoch)
+    left = Decimal(diff_slot) * Decimal(decentralizationParam)
+    right = Decimal(diff_slot + 1) * Decimal(decentralizationParam)
+    if math.ceil( left ) < math.ceil( right ):
+        return True
+    return False
 
 def mkSeed(slot,eta0):
 
