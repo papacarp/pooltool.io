@@ -1,0 +1,15 @@
+[Unit]
+Description=Pooltool sendmytip for systemd
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart="/root/scripts/sendmytip.sh"
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sendmytip
+Restart=on-failure
+RestartSec=15s
+
+[Install]
+WantedBy=multi-user.target
