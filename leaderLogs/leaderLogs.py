@@ -60,6 +60,8 @@ else:
 
 # Bindings are not avaliable so using ctypes to just force it in for now.
 libsodium = cdll.LoadLibrary("/usr/local/lib/libsodium.so")
+#MACOS users can use this and comment line above
+#libsodium = cdll.LoadLibrary("/usr/local/lib/libsodium.23.dylib")
 libsodium.sodium_init()
 
 # Hard code these for now.
