@@ -47,7 +47,7 @@ def print_safe(*text):
         print(text)
 
 epochNeeded = args.epoch == None
-nonceNeeded = args.epoch-nonce == None
+nonceNeeded = args.eta0 == None
 dNeeded = args.d == None
 apiNeedeed = epochNeeded | nonceNeeded | dNeeded
 
