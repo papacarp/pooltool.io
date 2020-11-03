@@ -7,6 +7,7 @@ parser = argparse.ArgumentParser(description="Calculate the sigma value of the s
 parser.add_argument('--pool-id', dest='id', help='the pool ID', required=True)
 parser.add_argument('--ledger', dest='ledger', default='ledger.json', help='the path to a current ledger-state JSON file')
 parser.add_argument('--next', action='store_true', help='if specified will provide sigma for the next epoch instead of the current epoch')
+parser.add_argument('--porcelain', action='store_true', help='if specified will print JSON')
 
 args = parser.parse_args()
 
@@ -14,8 +15,12 @@ poolId = args.id
 ledger = args.ledger
 
 if not path.exists(ledger):
-    print("We tried but could not locate your ledger-state JSON file!")
-    print("Use: \033[1;34mcardano-cli shelley query ledger-state --mainnet --out-file ledger.json\033[0m to export one!")
+    txt1 = "We tried but could not locate your ledger-state JSON file!"
+    txt1 += "Use: \033[1;34mcardano-cli shelley query ledger-state --mainnet --out-file ledger.json\033[0m to export one!"
+    if not args.porcelain:
+        print(txt1)
+    else:
+        print('{ "error": "' + txt1 + '"}')        
     exit(1)
 
 with open(ledger) as f:
@@ -30,7 +35,10 @@ if args.next:
 blockstakedelegators={}
 blockstake={}
 bs={}
-print("building "+stakeinfo+" stake")
+
+if not args.porcelain:
+    print("building "+stakeinfo+" stake")
+
 for item2 in ledger['esSnapshots'][stakequery]['_delegations']:
     keyhashobj = []
     for itemsmall in item2:
@@ -55,6 +63,7 @@ for item2 in ledger['esSnapshots'][stakequery]['_stake']:
             blockstake[delegatorid]=snapstake
         else:
             blockstake[delegatorid]=blockstake[delegatorid]+snapstake
+
 total_bs=0
 for poolid in blockstakedelegators:
     bs[poolid]=0
@@ -65,4 +74,11 @@ for poolid in blockstakedelegators:
 
 sigma = float(bs[poolId]/total_bs)
 
-print("Sigma:",sigma)
+if not args.porcelain:
+    print("Sigma:",sigma)
+else:
+    result = dict()
+    result["sigma"] = "%.10f" % float(sigma)
+    result["stakeinfo"] = stakeinfo
+    result["stakequery"] = stakequery
+    print(json.dumps(result))
