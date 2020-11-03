@@ -60,9 +60,9 @@ def fetchEpochData(epoch):
 
     try:
         page = urlopen(url)
-        epoch_data = json.loads(page.read().decode("utf-8"))
+        return json.loads(page.read().decode("utf-8"))
     except:
-        print_safe("\033[1;31m[WARN]:\033[0m Unable to fetch data from the epoch API.")
+        print_safe("\033[1;31m[WARN]:\033[0m Unable to fetch data from the epoch API (" + str(e) +").")
         exit(1)
 
 try:
@@ -79,8 +79,8 @@ try:
     poolId = args.poolId
     sigma = args.sigma
     local_tz = pytz.timezone(args.tz)
-except:
-    print_safe("\033[1;31m[ERROR]:\033[0m One or more arguments are missing or invalid. Please try again.")
+except err:
+    print_safe("\033[1;31m[ERROR]:\033[0m One or more arguments are missing or invalid (" + str(e) +"). Please try again.")
     parser.format_help()
     parser.print_help()
     exit(1)
