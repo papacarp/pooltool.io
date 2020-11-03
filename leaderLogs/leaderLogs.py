@@ -46,26 +46,38 @@ def print_safe(*text):
     if not args.porcelain:
         print(text)
 
-epoch = args.epoch
-if epoch == None:
-   print_safe("\033[94m[INFO]:\033[0m No epoch provided, using latest known epoch.")
-   url=("https://epoch-api.crypto2099.io:2096/epoch/")
-else:
-   url=("https://epoch-api.crypto2099.io:2096/epoch/"+str(epoch))
+epochNeeded = args.epoch == None
+nonceNeeded = args.epoch-nonce == None
+dNeeded = args.d == None
+apiNeedeed = epochNeeded | nonceNeeded | dNeeded
+
+def fetchEpochData(epoch):
+    if epoch == None:
+        print_safe("\033[94m[INFO]:\033[0m No epoch provided, using latest known epoch.")
+        url=("https://epoch-api.crypto2099.io:2096/epoch/")
+    else:
+        url=("https://epoch-api.crypto2099.io:2096/epoch/"+str(epoch))
+
+    try:
+        page = urlopen(url)
+        epoch_data = json.loads(page.read().decode("utf-8"))
+    except:
+        print_safe("\033[1;31m[WARN]:\033[0m Unable to fetch data from the epoch API.")
+        exit(1)
 
 try:
-    page = urlopen(url)
-    epoch_data = json.loads(page.read().decode("utf-8"))
-except:
-    print_safe("\033[1;31m[WARN]:\033[0m Unable to fetch data from the epoch API.")
-    exit(1)
-
-try:
-    epoch = args.epoch or epoch_data['number']
+    if apiNeedeed:
+        epoch_data = fetchEpochData(args.epoch)
+        epoch = epoch_data['number']
+        eta0 = epoch_data['eta0']
+        decentralizationParam = args.d or epoch_data['d']
+    else:
+        epoch = args.epoch
+        eta0 = args.eta0
+        decentralizationParam = args.d
+    
     poolId = args.poolId
     sigma = args.sigma
-    eta0 = args.eta0 or epoch_data['eta0']
-    decentralizationParam = args.d or epoch_data['d']
     local_tz = pytz.timezone(args.tz)
 except:
     print_safe("\033[1;31m[ERROR]:\033[0m One or more arguments are missing or invalid. Please try again.")
