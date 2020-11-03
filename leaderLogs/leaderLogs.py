@@ -3,6 +3,7 @@
 import math
 import binascii
 from datetime import datetime, timezone
+from time import mktime
 import pytz
 import hashlib
 from ctypes import *
@@ -21,13 +22,33 @@ parser.add_argument('--epoch-nonce', dest='eta0', help='the epoch nonce to check
 parser.add_argument('--d-param', dest='d', type=float, help='the current decentralization parameter [e.g. 0.0 - 1.0]')
 parser.add_argument('-bft', action='store_true', help='if specified will also calculate slots stolen by BFT due to d not being 0')
 parser.add_argument('--tz', dest='tz', default='America/Los_Angeles', help='the local timezone name [Default: America/Los_Angeles]')
-
+parser.add_argument('--porcelain', action='store_true', help='if specified will print JSON')
 
 args = parser.parse_args()
 
+blocks=[]
+def print_block(timestamp, stolen, epoch_slot):
+    if not args.porcelain:
+        if stolen:
+            print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Stolen by BFT for " + str(slot-firstSlotOfEpoch) + ", Cumulative stolen blocks due to d param: " + str(stolencount))
+        else:
+            print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Leader for " + str(slot-firstSlotOfEpoch) + ", Cumulative epoch blocks: " + str(slotcount))
+
+    else:
+        block = dict()
+        block["timestamp"] = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        block["timestamp_unix"] = mktime(timestamp.timetuple())
+        block["stolen"] = stolen
+        block["epochSlot"] = epoch_slot
+        blocks.append(block)
+
+def print_safe(*text):
+    if not args.porcelain:
+        print(text)
+
 epoch = args.epoch
 if epoch == None:
-   print("\033[94m[INFO]:\033[0m No epoch provided, using latest known epoch.")
+   print_safe("\033[94m[INFO]:\033[0m No epoch provided, using latest known epoch.")
    url=("https://epoch-api.crypto2099.io:2096/epoch/")
 else:
    url=("https://epoch-api.crypto2099.io:2096/epoch/"+str(epoch))
@@ -36,7 +57,8 @@ try:
     page = urlopen(url)
     epoch_data = json.loads(page.read().decode("utf-8"))
 except:
-    print("\033[1;31m[WARN]:\033[0m Unable to fetch data from the epoch API.")
+    print_safe("\033[1;31m[WARN]:\033[0m Unable to fetch data from the epoch API.")
+    exit(1)
 
 try:
     epoch = args.epoch or epoch_data['number']
@@ -46,10 +68,10 @@ try:
     decentralizationParam = args.d or epoch_data['d']
     local_tz = pytz.timezone(args.tz)
 except:
-    print("\033[1;31m[ERROR]:\033[0m One or more arguments are missing or invalid. Please try again.")
+    print_safe("\033[1;31m[ERROR]:\033[0m One or more arguments are missing or invalid. Please try again.")
     parser.format_help()
     parser.print_help()
-    exit()
+    exit(1)
 
 if re.search(r"[a-f0-9]{128}", args.skey):
     poolVrfSkey = args.skey
@@ -73,7 +95,7 @@ epoch211firstslot = 5788800
 # calculate first slot of target epoch
 firstSlotOfEpoch = 5788800 + (epoch - 211)*epochLength
 
-print("Checking leadership log for Epoch",epoch,"[ d Param:",decentralizationParam,"]")
+print_safe("Checking leadership log for Epoch", epoch, " [ d Param:", decentralizationParam, "]")
 from decimal import *
 getcontext().prec = 9
 getcontext().rounding = ROUND_HALF_UP
@@ -113,8 +135,8 @@ def vrfEvalCertified(seed, tpraosCanBeLeaderSignKeyVRF):
         return proofHash.raw
 
     else:
-        print("error.  Feed me bytes")
-        exit()
+        print_safe("error.  Feed me bytes")
+        exit(2)
 
 # Determine if our pool is a slot leader for this given slot
 # @param slot The slot to check
@@ -135,6 +157,7 @@ def isSlotLeader(slot,activeSlotCoeff,sigma,eta0,poolVrfSkey):
     sigmaOfF = math.exp(-sigma * c)
     return q <= sigmaOfF
 
+
 slotcount=0
 stolencount=0
 for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
@@ -149,12 +172,15 @@ for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
 
         if overlaySlot:
             stolencount+=1
-            print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Stolen by BFT for " + str(slot-firstSlotOfEpoch) + ", Cumulative stolen blocks due to d param: " + str(stolencount))
+            print_block(timestamp, True, slot - firstSlotOfEpoch)
         else:
             slotcount+=1
-            print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Leader for " + str(slot-firstSlotOfEpoch) + ", Cumulative epoch blocks: " + str(slotcount))
+            print_block(timestamp, False, slot - firstSlotOfEpoch)
 
 if slotcount == 0:
-    print("No slots found for current epoch... :(")
+    print_safe("No slots found for current epoch... :(")
 if overlaySlot:
-    print("Slots stolen by BFT nodes: " + str(stolencount))
+    print_safe("Slots stolen by BFT nodes: " + str(stolencount))
+
+if args.porcelain:
+    print(json.dumps(blocks))
