@@ -1,3 +1,5 @@
+#!/bin/env python3
+
 # leader logs proof of concept - all credit goes to @andrewwestberg of BCSH for the algo extraction from cardano-node
 
 import math
