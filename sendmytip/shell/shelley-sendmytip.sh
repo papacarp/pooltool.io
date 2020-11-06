@@ -15,25 +15,23 @@ PLATFORM="shelley-sendmytip.sh"
 # "defaultScribes": [
 #    [
 #      "FileSK",
-#      "/opt/cardano/cnode/logs/node-0.json"
+#      "/opt/cardano/cnode/logs/node0.json"
 #    ]
 # ],
 #
 # "setupScribes": [
 #    {
 #     "scKind": "FileSK",
-#     "scName": "/opt/cardano/cnode/logs/node-0.json",
+#     "scName": "/opt/cardano/cnode/logs/node0.json",
 #     "scFormat": "ScJson",
 #     "scRotation": null
 #    }
 # ]
 
 # MODIFY THIS LINE TO POINT TO YOUR LOG FILE AS SPECIFIED IN YOUR CONFIG FILE
-LOG_FILE="/opt/cardano/cnode/logs/node-0.json"
+LOG_FILE="/opt/cardano/cnode/logs/node0.json"
 
-SOCKET="/opt/cardano/cnode/sockets/node0.socket"
-
-export CARDANO_NODE_SOCKET_PATH=${SOCKET}
+[[ -z "${CARDANO_NODE_SOCKET_PATH}" ]] && export CARDANO_NODE_SOCKET_SOCKET="/opt/cardano/cnode/sockets/node0.socket"
 
 shopt -s expand_aliases
 
