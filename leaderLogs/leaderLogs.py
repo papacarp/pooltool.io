@@ -1,6 +1,6 @@
 #!/bin/env python3
 
-# leader logs proof of concept - all credit goes to @andrewwestberg of BCSH for the algo extraction from cardano-node
+# leader logs proof of concept - all credit goes to @andrewwestberg of BCSH, @AC8998 (Antonio) of CSP and @iiLap (Pal Dorogi) of UNDR for the algo extraction from cardano-node
 
 import math
 import binascii
