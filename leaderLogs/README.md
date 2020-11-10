@@ -49,7 +49,7 @@ This script requires the *pytz* extension for Python. You can make sure this is 
 on your system by running the following command:
 
 ```shell
-user@foo:~$ python3 pip -m install pytz
+user@foo:~$ python3 -m pip install pytz
 ```
 ### Arguments
 
