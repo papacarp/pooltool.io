@@ -24,10 +24,15 @@ sigma value for.
 and attempt to parse the data there. Use this optional argument to specify the path
 to the ledger-state JSON file you would like to use.
 
+#### --next
+
+***Optional***. Get the specified pool's sigma value for the following epoch (relative
+to the specified ledger file).
+
 ### Usage
 
 ```shell
-user@foo:~$ python3 getSigma.py --pool-id 123456789abcdefxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx --ledger /path/to/ledger.json
+user@foo:~$ python3 getSigma.py --pool-id 123456789abcdefxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx --ledger /path/to/ledger.json --next
 building active stake
 Sigma: 0.001234567890123456
 ```
@@ -89,6 +94,12 @@ for the epoch you are checking the leadership schedule of.
 ***Optional***. Default: Current *d* parameter from API. Provide the current *d*
 (decentralization) parameter of the network for the epoch you are checking the
 leadership of.
+
+#### -bft
+
+***Optional***. Use this flag to instruct leaderLogs.py to show collisions with
+the BFT Node overlay slots. The use of this flag can be viewed as either helpful
+information or masochistic behavior depending on how you look at it. :)
 
 #### --pool-id STRING [123456789abcdefxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]
 
