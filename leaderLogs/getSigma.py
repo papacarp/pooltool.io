@@ -22,7 +22,7 @@ if not path.exists(ledger):
 
 with open(ledger) as f:
     ledger = json.load(f)
-    
+
 stakequery="_pstakeSet"
 stakeinfo="active"
 if args.next:
@@ -32,8 +32,15 @@ if args.next:
 blockstakedelegators={}
 blockstake={}
 bs={}
+
+
+if 'nesEs' in ledger:
+  ledger_set=ledger['nesEs']['esSnapshots'][stakequery]
+else:
+  ledger_set=ledger['esSnapshots'][stakequery]
+
 print("building "+stakeinfo+" stake")
-for item2 in ledger['esSnapshots'][stakequery]['_delegations']:
+for item2 in ledger_set['_delegations']:
     keyhashobj = []
     for itemsmall in item2:
         if 'key hash' in itemsmall:
@@ -45,7 +52,7 @@ for item2 in ledger['esSnapshots'][stakequery]['_delegations']:
     else:
         blockstakedelegators[poolid]=blockstakedelegators[poolid]+keyhashobj
 
-for item2 in ledger['esSnapshots'][stakequery]['_stake']:
+for item2 in ledger_set['_stake']:
     delegatorid = None
     for itemsmall in item2:
         if isinstance(itemsmall,int):
