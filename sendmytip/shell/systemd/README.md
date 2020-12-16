@@ -1,6 +1,6 @@
 # send my tip for systemd #
 
-This is a modified version of the ```shelley-sendmytip.sh``` script so that it can work for those who do not use ```cntools``` and manage their ```cardano-node``` with ```systemd```.
+This is a modified version of the ```sendmytip.sh``` script so that it can work for those who do not use ```cntools``` and manage their ```cardano-node``` with ```systemd```.
 
 This script is provided by Andrea of the [Insalada Stake Pool](https://insalada.io) (ticker: SALAD). Reach out to him on [PoolTool Telegram Channel](https://t.me/pooltool) for any issue with this script.
 

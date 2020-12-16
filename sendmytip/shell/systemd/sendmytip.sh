@@ -19,7 +19,7 @@ export CARDANO_NODE_SOCKET_PATH="/home/cardano-node/socket/node.socket"
 #########################################################################################################################
 
 # THE NAME OF THE SCRIPT YOU USE TO MANAGE YOUR POOL
-PLATFORM="shelley-sendmytip.sh"
+PLATFORM="sendmytip.sh"
 
 # CARDANO BINARIES
 CNODE=$(command -v cardano-node)
@@ -37,7 +37,7 @@ while IFS= read -r line; do
         at=$(echo "$line" | grep -o "[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.*UTC" | sed 's/\ /T/' | sed 's/\ UTC/Z/')
 
         # NODE TIP
-        nodeTip=$("${CCLI}" shelley query tip --mainnet)
+        nodeTip=$("${CCLI}" query tip --mainnet)
         lastSlot=$(echo "$nodeTip" | jq -r .slotNo)
         lastBlockHash=$(echo "$nodeTip" | jq -r .headerHash)
         lastBlockHeight=$(echo "$nodeTip" | jq -r .blockNo)
