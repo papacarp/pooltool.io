@@ -1,3 +1,16 @@
+***
+### DEPRECATION NOTICE
+
+These scripts will cease to be maintained immediately and may not be updated to
+support changes to future **Cardano** node and cli instances. The scripts may be removed
+from this repository all together on or after **2021-03-01**. No support will be
+provided for these scripts by Andrew Westberg, PapaCarp, or Adam Dean. As an alternative,
+we strongly recommend that you consider installing the fantastic 
+[CNCLI](https://github.com/AndrewWestberg/cncli) utility library by 
+[Andrew Westberg](https://github.com/AndrewWestberg). 
+
+***
+
 # Cardano Leader Logs (Python Implementation)
 
 These utility scripts allow a Stake Pool Operator to check the slot leadership schedule
@@ -78,10 +91,17 @@ local timezone. [List of Valid Timezones](https://en.wikipedia.org/wiki/List_of_
 > [https://epoch-api.crypto2099.io](https://epoch-api.crypto2099.io:2096/epoch). If
 > the api is unavailable or you would like to test against another epoch or test 
 > network you can use the arguments below to override these settings.
+> 
+> **DEPRECATION NOTICE:** The original epoch api from [Crypto2099](https://github.com/crypto2099)
+> has been deprecated in favor of the new API service that works seamlessly with the CNCLI library.
+> You can query the new API for the necessary arguments by visiting calling:
+> https://api.crypto2099.io/v1/sigma/<pool_id>/<epoch_no>.
+> Replace **<pool_id>** with your Pool ID and **<epoch_no>** with the epoch you would like
+> parameter details for.
 
 #### --epoch INTEGER [222]
 
-***Optional***. Default: Current epoch from API. Provide the epoch number you would
+***Optional***. Default: Latest current epoch from API. Provide the epoch number you would
 like to check for the leadership schedule of.
 
 #### --epoch-nonce STRING [171625aef5357dfccfeaeedecd5de49f71fb6e05953f2799d3ff84419dbef0ac]
@@ -103,8 +123,9 @@ information or masochistic behavior depending on how you look at it. :)
 
 #### --pool-id STRING [123456789abcdefxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]
 
-***UNUSED***. This parameter is currently unused but has been left in the script
-for future support.
+***Optional***. If you provide your Pool ID (Bech32 or Hex) as an argument; the script
+will attempt to query the new Crypto2099 Epoch API for all necessary arguments to calculate
+leadership logs.
 
 ### Usage
 
@@ -113,6 +134,20 @@ when using in your case that you change the command arguments to values that are
 accurate for your pool.
 
 #### Simple Usage
+```shell
+foo@bar:~$ python3 leaderLogs.py --vrf-skey /path/to/my/pool.vrf.skey --pool-id d9812f8d30b5db4b03e5b76cfd242db9cd2763da4671ed062be808a0
+Checking leadership log for d9812f8d30b5db4b03e5b76cfd242db9cd2763da4671ed062be808a0
+Epoch #222 [d Param: 0.6]
+Pool Active Stake: 188554157002146 
+Total Active Stake: 16371244779824020
+Pool Sigma: 0.011517398923417283
+Epoch Nonce: 171625aef5357dfccfeaeedecd5de49f71fb6e05953f2799d3ff84419dbef0ac
+2020-10-07 17:50:35 ==> Leader for 10551944, Cumulative epoch blocks: 1
+...
+2020-10-12 08:05:33 ==> Leader for 10948842, Cumulative epoch blocks: 10
+```
+
+#### Basic Usage
 ```shell
 foo@bar:~$ python3 leaderLogs.py --vrf-skey /path/to/my/pool.vrf.skey --sigma 0.001234567890123456
 Checking leadership log for Epoch 222 [ d Param: 0.6 ]

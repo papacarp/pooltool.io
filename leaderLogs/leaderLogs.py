@@ -16,42 +16,79 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Calculate the leadership log.")
 parser.add_argument('--vrf-skey', dest='skey', help='provide the path to the pool.vrf.skey file or the raw skey (128 hex characters)', required=True)
-parser.add_argument('--sigma', dest='sigma', type=float, help='the controlled stake sigma value of the pool [e.g. 0.0034052348379780869]', required=True)
-parser.add_argument('--pool-id', dest='poolId', help='the pool ID')
+parser.add_argument('--sigma', dest='sigma', type=float, help='the controlled stake sigma value of the pool [e.g. 0.0034052348379780869]')
+parser.add_argument('--pool-id', dest='poolId', help='the Pool ID to fetch from the Epoch API')
 parser.add_argument('--epoch', dest='epoch', type=int, help='the epoch number [e.g. 221]')
 parser.add_argument('--epoch-nonce', dest='eta0', help='the epoch nonce to check')
 parser.add_argument('--d-param', dest='d', type=float, help='the current decentralization parameter [e.g. 0.0 - 1.0]')
 parser.add_argument('-bft', action='store_true', help='if specified will also calculate slots stolen by BFT due to d not being 0')
 parser.add_argument('--tz', dest='tz', default='America/Los_Angeles', help='the local timezone name [Default: America/Los_Angeles]')
 
-
 args = parser.parse_args()
 
 epoch = args.epoch
-if epoch == None:
-   print("\033[94m[INFO]:\033[0m No epoch provided, using latest known epoch.")
-   url=("https://epoch-api.crypto2099.io:2096/epoch/")
+poolId = args.poolId
+local_tz = pytz.timezone(args.tz)
+
+if poolId is not None:
+    # Get parameters from API
+    print("Checking leadership log for", poolId)
+    if epoch is not None:
+        print("\033[94m[INFO]:\033[0m Checking leadership for Epoch", epoch)
+        url=("https://api.crypto2099.io/v1/sigma/"+str(poolId)+"/"+str(epoch))
+    else:
+        print("\033[94m[INFO]:\033[0m No epoch provided, using latest known epoch.")
+        url=("https://api.crypto2099.io/v1/sigma/"+str(poolId))
+    try:
+        page = urlopen(url)
+        pool_data = json.loads(page.read().decode("utf-8"))
+    except:
+        print("\033[1;31m[WARN]:\033[0m Unable to fetch data from the sigma API.")
+        exit()
+    try:
+        epoch = pool_data['epoch']
+        sigma = pool_data['sigma']
+        eta0 = pool_data['nonce']
+        decentralizationParam = pool_data['d']
+    except:
+        print("\033[1;31m[ERROR]:\033[0m One or more data points from the API are missing or invalid. Please try again.")
+        parse.format_help()
+        parser.print_help()
+        exit()
+
+    print("d Param:",decentralizationParam)
+    print("Pool Active Stake:", pool_data['active_stake'])
+    print("Total Active Stake:", pool_data['total_staked'])
+    print("Pool Sigma:", sigma)
+    print("Epoch Nonce:", eta0)
 else:
-   url=("https://epoch-api.crypto2099.io:2096/epoch/"+str(epoch))
+    if epoch == None:
+       print("\033[94m[INFO]:\033[0m No epoch provided, using latest known epoch.")
+       url=("https://api.crypto2099.io/v1/epoch/")
+    else:
+       url=("https://api.crypto2099.io/v1/epoch/"+str(epoch))
 
-try:
-    page = urlopen(url)
-    epoch_data = json.loads(page.read().decode("utf-8"))
-except:
-    print("\033[1;31m[WARN]:\033[0m Unable to fetch data from the epoch API.")
+    try:
+        page = urlopen(url)
+        epoch_data = json.loads(page.read().decode("utf-8"))
+    except:
+        print("\033[1;31m[WARN]:\033[0m Unable to fetch data from the epoch API.")
 
-try:
-    epoch = args.epoch or epoch_data['number']
-    poolId = args.poolId
-    sigma = args.sigma
-    eta0 = args.eta0 or epoch_data['eta0']
-    decentralizationParam = args.d or epoch_data['d']
-    local_tz = pytz.timezone(args.tz)
-except:
-    print("\033[1;31m[ERROR]:\033[0m One or more arguments are missing or invalid. Please try again.")
-    parser.format_help()
-    parser.print_help()
-    exit()
+    try:
+        epoch = args.epoch or epoch_data['number']
+        sigma = args.sigma
+        eta0 = args.eta0 or epoch_data['nonce']
+        decentralizationParam = args.d or epoch_data['d']
+    except:
+        print("\033[1;31m[ERROR]:\033[0m One or more arguments are missing or invalid. Please try again.")
+        parser.format_help()
+        parser.print_help()
+        exit()
+    print("Checking leadership log for Epoch",epoch,"[ d Param:",decentralizationParam,"]")
+
+if eta0 == 'TBD':
+        print("\033[1;31m[ERROR]:\033[0m You're a bit early. The epoch nonce for Epoch",epoch,"isn't ready yet! Try again later.")
+        exit()
 
 if re.search(r"[a-f0-9]{128}", args.skey):
     poolVrfSkey = args.skey
@@ -75,7 +112,6 @@ epoch211firstslot = 5788800
 # calculate first slot of target epoch
 firstSlotOfEpoch = 5788800 + (epoch - 211)*epochLength
 
-print("Checking leadership log for Epoch",epoch,"[ d Param:",decentralizationParam,"]")
 from decimal import *
 getcontext().prec = 9
 getcontext().rounding = ROUND_HALF_UP
