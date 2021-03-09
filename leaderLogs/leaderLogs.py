@@ -52,11 +52,12 @@ dNeeded = args.d == None
 apiNeedeed = epochNeeded | nonceNeeded | dNeeded
 
 def fetchEpochData(epoch):
+    api_url="https://api.crypto2099.io/v1/sigma/" + poolId + "/"
     if epoch == None:
         print_safe("\033[94m[INFO]:\033[0m No epoch provided, using latest known epoch.")
-        url=("https://epoch-api.crypto2099.io:2096/epoch/")
+        url=(api_url)
     else:
-        url=("https://epoch-api.crypto2099.io:2096/epoch/"+str(epoch))
+        url=(api_url + str(epoch))
 
     try:
         page = urlopen(url)
@@ -68,8 +69,8 @@ def fetchEpochData(epoch):
 try:
     if apiNeedeed:
         epoch_data = fetchEpochData(args.epoch)
-        epoch = epoch_data['number']
-        eta0 = epoch_data['eta0']
+        epoch = epoch_data['epoch']
+        eta0 = epoch_data['nonce']
         decentralizationParam = args.d or epoch_data['d']
     else:
         epoch = args.epoch
