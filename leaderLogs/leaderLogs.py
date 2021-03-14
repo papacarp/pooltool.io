@@ -8,7 +8,9 @@ from datetime import datetime, timezone
 import pytz
 import hashlib
 from ctypes import *
+from os import path
 import re
+from sys import exit, platform
 
 from urllib.request import urlopen
 import json
@@ -97,10 +99,22 @@ else:
         skey = json.load(f)
         poolVrfSkey = skey['cborHex'][4:]
 
-# Bindings are not avaliable so using ctypes to just force it in for now.
-libsodium = cdll.LoadLibrary("/usr/local/lib/libsodium.so")
-#MACOS users can use this and comment line above
-#libsodium = cdll.LoadLibrary("/usr/local/lib/libsodium.23.dylib")
+# Determine libsodium path based on platform
+libsodium = None
+if platform == "linux" or platform == "linux2":
+    # Bindings are not avaliable so using ctypes to just force it in for now.
+    libsodium = cdll.LoadLibrary("/usr/local/lib/libsodium.so")
+elif platform == "darwin":
+    # Try both Daedalus' bundled libsodium and a system-wide libsodium path.
+    daedalusLibsodiumPath = path.join("/Applications", "Daedalus Mainnet.app", "Contents", "MacOS", "libsodium.23.dylib")
+    systemLibsodiumPath = path.join("/usr", "local", "lib", "libsodium.23.dylib")
+
+    if path.exists(daedalusLibsodiumPath):
+        libsodium = cdll.LoadLibrary(daedalusLibsodiumPath)
+    elif path.exists(systemLibsodiumPath):
+        libsodium = cdll.LoadLibrary(systemLibsodiumPath)
+    else:
+        exit(f'Unable to find libsodium, checked the following paths: {", ".join([daedalusLibsodiumPath, systemLibsodiumPath])}')
 libsodium.sodium_init()
 
 # Hard code these for now.
