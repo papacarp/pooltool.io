@@ -31,7 +31,7 @@ PLATFORM="sendmytip.sh"
 # MODIFY THIS LINE TO POINT TO YOUR LOG FILE AS SPECIFIED IN YOUR CONFIG FILE
 LOG_FILE="/opt/cardano/cnode/logs/node0.json"
 
-[[ -z "${CARDANO_NODE_SOCKET_PATH}" ]] && export CARDANO_NODE_SOCKET_SOCKET="/opt/cardano/cnode/sockets/node0.socket"
+[[ -z "${CARDANO_NODE_SOCKET_PATH}" ]] && export CARDANO_NODE_SOCKET_PATH="/opt/cardano/cnode/sockets/node0.socket"
 
 shopt -s expand_aliases
 
