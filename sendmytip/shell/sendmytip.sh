@@ -42,9 +42,9 @@ while read line ; do
     echo "$line" | grep "TraceAddBlockEvent.AddedToCurrentChain" 2>/dev/null
     if [ $? = 0 ]
     then
-        # current cardano-node json output has a bug in it with an extra quote it seems so jq doesn't work by default.  ("newtip":"\"8afc7f@6131589")
+        # current cardano-node v1.35.3 json output has a bug in it with extra quotes it seems, so jq doesn't work by default.  ("hash":""13de1a62eeb85cb1bca5b0361d4557244285e06c0f79844e4f6c04d102e2cbf8"")
         # Fix the line so that it's proper JSON
-        LINE=$(echo "$line" | sed "s/\"newtip\":\"\"/\"newtip\":\"/g")
+        LINE=$(echo "$line" | sed -E "s/\"\"([0-9a-z]{64})\"\"/\"\1\"/g")
         nodeVersion=$(echo ${LINE} | jq -r .env)
         AT=$(echo ${LINE} | jq -r .at)
 
