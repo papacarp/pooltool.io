@@ -38,9 +38,9 @@ while IFS= read -r line; do
 
         # NODE TIP
         nodeTip=$("${CCLI}" query tip --mainnet)
-        lastSlot=$(echo "$nodeTip" | jq -r .slotNo)
-        lastBlockHash=$(echo "$nodeTip" | jq -r .headerHash)
-        lastBlockHeight=$(echo "$nodeTip" | jq -r .blockNo)
+        lastSlot=$(echo "$nodeTip" | jq -r .slot)
+        lastBlockHash=$(echo "$nodeTip" | jq -r .hash)
+        lastBlockHeight=$(echo "$nodeTip" | jq -r .block)
 
         # THE DATA TO SEND TO POOLTOOL
         JSON="$(jq -n --compact-output --arg NODE_ID "$PT_MY_NODE_ID" --arg MY_API_KEY "$PT_MY_API_KEY" --arg MY_POOL_ID "$PT_MY_POOL_ID" --arg VERSION "$nodeVersion" --arg AT "$at" --arg BLOCKNO "$lastBlockHeight" --arg SLOTNO "$lastSlot" --arg PLATFORM "$PLATFORM" --arg BLOCKHASH "$lastBlockHash" '{apiKey: $MY_API_KEY, poolId: $MY_POOL_ID, data: {nodeId: $NODE_ID, version: $VERSION, at: $AT, blockNo: $BLOCKNO, slotNo: $SLOTNO, blockHash: $BLOCKHASH, platform: $PLATFORM}}')"
